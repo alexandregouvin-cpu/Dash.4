@@ -9,6 +9,9 @@ vencimentos.
 
 Abra `index.html` no navegador (duplo clique). Não precisa de servidor.
 
+O visual segue a identidade Apis Flora usada no Mapa de Transportadoras
+(verde profundo, menta, amarelo, Poppins + Inter, logo em `assets/`).
+
 - Se existir `dados/faturas.js`, o painel mostra as faturas reais.
 - Se não existir, mostra os **dados de exemplo** de `dados/faturas.exemplo.js`
   (transportadoras fictícias, datas geradas em relação a hoje).
