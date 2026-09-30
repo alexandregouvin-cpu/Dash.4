@@ -458,7 +458,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v26 (corte de texto definitivamente resolvido)</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v27</footer>
 
 <script>
 /* =========================================================
@@ -477,6 +477,13 @@ function passaFiltroGrupo(valor){
 function passaFiltroFrete(valor){
   const n = normalize(valor);
   return n.includes("CIF") || n.startsWith("0");
+}
+function esc(v){
+  // Escapa texto vindo da planilha antes de inserir no HTML (aspas, <, > e & nas descrições/observações)
+  return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function fmtQtd(q){
+  return typeof q === "number" ? q.toLocaleString("pt-BR") : String(q ?? "");
 }
 function fmtData(val){
   // val pode vir como Date (cellDates:true) ou string
@@ -528,7 +535,7 @@ function resumoItens(itens){
 function buildItensTooltipHtml(itens){
   if(!itens || itens.length === 0) return "";
   const linhas = itens.map(it=>`
-    <div class="tooltip-row"><span class="prod">${it.descricao}</span><span class="qty">${it.qtd} ${it.um||""}</span></div>
+    <div class="tooltip-row"><span class="prod">${esc(it.descricao)}</span><span class="qty">${esc(fmtQtd(it.qtd))} ${esc(it.um)}</span></div>
   `).join("");
   return `<div class="tooltip-card"><div class="tooltip-title">Itens do pedido (${itens.length})</div>${linhas}</div>`;
 }
@@ -609,8 +616,8 @@ els.fileInputEfetiva.addEventListener("change", e=>{
       if(rows.length === 0) return;
       efetivaRawRows = rows;
       efetivaHeaders = Object.keys(rows[0]);
-      els.mapPedido.innerHTML = efetivaHeaders.map(h=>`<option value="${h}">${h}</option>`).join("");
-      els.mapDataEfetiva.innerHTML = efetivaHeaders.map(h=>`<option value="${h}">${h}</option>`).join("");
+      els.mapPedido.innerHTML = efetivaHeaders.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
+      els.mapDataEfetiva.innerHTML = efetivaHeaders.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
       // tenta pré-selecionar por nome provável
       preselect(els.mapPedido, efetivaHeaders, ["pedido","nro_pedido","numero"]);
       preselect(els.mapDataEfetiva, efetivaHeaders, ["efetiv","real","entrega"]);
@@ -823,7 +830,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v26`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v27`;
 
   renderAll();
 }
@@ -874,15 +881,15 @@ function renderForecast(){
     let resumoLabel = "Sem chegadas previstas";
     if(pedidos > 0){
       const fornecedores = [...new Set(grupos.map(g=>g.nome_fornec))];
-      resumoLabel = fornecedores.slice(0,2).join(", ") + (fornecedores.length>2 ? ` +${fornecedores.length-2}` : "");
+      resumoLabel = esc(fornecedores.slice(0,2).join(", ")) + (fornecedores.length>2 ? ` +${fornecedores.length-2}` : "");
       const blocos = grupos.map(g=>{
         const linhasItens = g.itens.map(it=>`
-          <div class="tooltip-row"><span class="prod">${it.descricao}</span><span class="qty">${it.qtd} ${it.um||""}</span></div>
+          <div class="tooltip-row"><span class="prod">${esc(it.descricao)}</span><span class="qty">${esc(fmtQtd(it.qtd))} ${esc(it.um)}</span></div>
         `).join("");
         const avisoAtraso = g.reagendadoPorAtraso
-          ? `<div style="font-size:10.5px;color:var(--accent-yellow);font-weight:700;margin-bottom:4px;">⚠️ Atrasado desde ${g.data_entrega} — reagendado (${g.diasAtraso}d)</div>`
+          ? `<div style="font-size:10.5px;color:var(--accent-yellow);font-weight:700;margin-bottom:4px;">⚠️ Atrasado desde ${esc(g.data_entrega)} — reagendado (${g.diasAtraso}d)</div>`
           : "";
-        return `<div style="margin-bottom:10px;">${avisoAtraso}<div style="font-size:11.5px;color:#fff;font-weight:700;margin-bottom:4px;">${g.nome_fornec} · Pedido ${g.nro_pedido}</div>${linhasItens}</div>`;
+        return `<div style="margin-bottom:10px;">${avisoAtraso}<div style="font-size:11.5px;color:#fff;font-weight:700;margin-bottom:4px;">${esc(g.nome_fornec)} · Pedido ${esc(g.nro_pedido)}</div>${linhasItens}</div>`;
       }).join("");
       tooltipHtml = `<div class="tooltip-card" style="max-width:380px;max-height:320px;overflow:auto;"><div class="tooltip-title">Chegando em ${dataLabel} (${pedidos} pedido${pedidos===1?"":"s"})</div>${blocos}</div>`;
     }
@@ -908,7 +915,7 @@ let selectedGrupos = new Set();
 function populateFilterOptions(){
   const grupos = [...new Set(processedRows.map(r=>r.grupo_item))].filter(Boolean).sort();
   if(selectedGrupos.size === 0){ grupos.forEach(g=>selectedGrupos.add(g)); }
-  els.grupoChips.innerHTML = grupos.map(g=>`<button type="button" class="chip ${selectedGrupos.has(g)?"active":""}" data-grupo="${g}">${g}</button>`).join("");
+  els.grupoChips.innerHTML = grupos.map(g=>`<button type="button" class="chip ${selectedGrupos.has(g)?"active":""}" data-grupo="${esc(g)}">${esc(g)}</button>`).join("");
   els.grupoChips.querySelectorAll(".chip").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const g = btn.dataset.grupo;
@@ -918,7 +925,7 @@ function populateFilterOptions(){
     });
   });
   const filiais = [...new Set(processedRows.map(r=>r.filial))].filter(Boolean).sort();
-  els.filialFilter.innerHTML = '<option value="">Todas as filiais</option>' + filiais.map(f=>`<option value="${f}">${f}</option>`).join("");
+  els.filialFilter.innerHTML = '<option value="">Todas as filiais</option>' + filiais.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join("");
 }
 
 function computeAcuracia(){
@@ -992,7 +999,7 @@ function renderKpis(){
 
   els.kpis.innerHTML = `
     <div class="kpi chegando"><div class="hex"></div><div class="label">Chegando em 14 dias</div><div class="value">${chegando14d}<span class="value-unit">${chegando14d===1?"pedido":"pedidos"}</span></div><div class="kpi-sub">${itensChegando} ${itensChegando===1?"item":"itens"} no total</div></div>
-    <div class="kpi total"><div class="hex"></div><div class="label">Pedidos (CIF filtrado)</div><div class="value">${total}</div><div class="kpi-chips">${Object.keys(porGrupoTotal).map(g=>`<span class="kpi-chip">${porGrupoTotal[g]} ${SIGLAS[g]||g}</span>`).join("")}</div></div>
+    <div class="kpi total"><div class="hex"></div><div class="label">Pedidos (CIF filtrado)</div><div class="value">${total}</div><div class="kpi-chips">${Object.keys(porGrupoTotal).map(g=>`<span class="kpi-chip">${porGrupoTotal[g]} ${esc(SIGLAS[g]||g)}</span>`).join("")}</div></div>
     <div class="kpi fornecedor"><div class="hex"></div><div class="label">Fornecedores únicos</div><div class="value">${fornecedores}</div><div class="kpi-sub">${fornecedoresChegando} com pedido em 14 dias</div></div>
     <div class="kpi recebimento"><div class="hex"></div><div class="label">Próximo recebimento</div>${
       recebimento
@@ -1001,7 +1008,7 @@ function renderKpis(){
     }</div>
     <div class="kpi topfornecedor"><div class="hex"></div><div class="label">Fornecedor c/ mais pedidos</div>${
       topFornecedor
-        ? `<div class="value" style="font-size:16px;line-height:1.3;">${topFornecedor.nome}</div><div class="kpi-sub">${topFornecedor.pedidos} pedidos</div>`
+        ? `<div class="value" style="font-size:16px;line-height:1.3;">${esc(topFornecedor.nome)}</div><div class="kpi-sub">${topFornecedor.pedidos} pedidos</div>`
         : `<div class="value muted">—</div>`
     }</div>
     <div class="kpi pendencias"><div class="hex"></div><div class="label">Atrasados reagendados</div><div class="value">${pendenciasCount}</div><div class="kpi-sub">${pendenciasCount>0?"sem confirmação — veja Previsão/Próximas entregas":"tudo em dia"}</div></div>
@@ -1103,7 +1110,7 @@ function renderCharts(){
         <div class="grupo-card">
           <div class="grupo-card-header">
             <span class="grupo-dot" style="background:${cor};"></span>
-            <span class="grupo-nome">${g}</span>
+            <span class="grupo-nome">${esc(g)}</span>
           </div>
           <div class="grupo-bar-track"><div class="grupo-bar-fill" style="width:${pct}%;background:${cor};"></div></div>
           <div class="grupo-stats">
@@ -1122,7 +1129,7 @@ let selectedGruposProx = new Set();
 
 function populateTopListFilters(){
   const grupos = [...new Set(processedRows.map(r=>r.grupo_item))].filter(Boolean).sort();
-  els.grupoChipsProx.innerHTML = grupos.map(g=>`<button type="button" class="chip ${selectedGruposProx.has(g)?"active":""}" data-grupo="${g}">${g}</button>`).join("");
+  els.grupoChipsProx.innerHTML = grupos.map(g=>`<button type="button" class="chip ${selectedGruposProx.has(g)?"active":""}" data-grupo="${esc(g)}">${esc(g)}</button>`).join("");
   els.grupoChipsProx.querySelectorAll(".chip").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const g = btn.dataset.grupo;
@@ -1133,7 +1140,7 @@ function populateTopListFilters(){
   });
   const filiaisAtuais = [...new Set(processedRows.map(r=>r.filial))].filter(Boolean).sort();
   const filialSelecionada = els.filialFilterProx.value;
-  els.filialFilterProx.innerHTML = '<option value="">Todas as filiais</option>' + filiaisAtuais.map(f=>`<option value="${f}">${f}</option>`).join("");
+  els.filialFilterProx.innerHTML = '<option value="">Todas as filiais</option>' + filiaisAtuais.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join("");
   els.filialFilterProx.value = filialSelecionada;
 }
 
@@ -1166,12 +1173,12 @@ function renderTopList(){
     const badgeLabel = row.reagendadoPorAtraso ? `Atrasado (${row.diasAtraso}d) — reagendado` : status.label;
     const badgeCls = row.reagendadoPorAtraso ? "reagendado" : status.cls;
     const dataLinha = row.reagendadoPorAtraso
-      ? `Pedido ${row.nro_pedido ?? ""} · previsto p/ ${row.data_entrega ?? ""}`
-      : `Pedido ${row.nro_pedido ?? ""} · ${row.data_entrega ?? ""}`;
+      ? `Pedido ${esc(row.nro_pedido)} · previsto p/ ${esc(row.data_entrega)}`
+      : `Pedido ${esc(row.nro_pedido)} · ${esc(row.data_entrega)}`;
     return `
     <div class="top-row ${row.reagendadoPorAtraso ? "top-row-reagendado" : ""}">
-      <div class="fornecedor">${row.nome_fornec ?? ""}</div>
-      <div class="item tooltip-trigger">${resumoItens(row.itens)}${itensTooltip}</div>
+      <div class="fornecedor">${esc(row.nome_fornec)}</div>
+      <div class="item tooltip-trigger">${esc(resumoItens(row.itens))}${itensTooltip}</div>
       <div>${dataLinha}</div>
       <div><span class="badge ${badgeCls}">${badgeLabel}</span></div>
     </div>`;
@@ -1218,6 +1225,12 @@ function renderTable(){
       let va = a[sortState.key], vb = b[sortState.key];
       if(sortState.key === "prazo_label"){ va = statusPrazo(a.data_entrega_raw, a.emissao_raw).label; vb = statusPrazo(b.data_entrega_raw, b.emissao_raw).label; }
       if(sortState.key === "itens_resumo"){ va = a.itens[0]?.descricao||""; vb = b.itens[0]?.descricao||""; }
+      // Colunas de data: compara a data de verdade, não o texto "dd/mm/aaaa" (que ordenava pelo dia)
+      const COLUNAS_DATA = {emissao:"emissao_raw", faturar_dia:"faturar_dia", data_entrega:"data_entrega_raw", entrega_efetiva:"entrega_efetiva_raw"};
+      if(COLUNAS_DATA[sortState.key]){
+        const da = toDate(a[COLUNAS_DATA[sortState.key]]), db = toDate(b[COLUNAS_DATA[sortState.key]]);
+        va = da ? da.getTime() : ""; vb = db ? db.getTime() : "";
+      }
       if(va === vb) return 0;
       if(va === "" || va === undefined) return 1;
       if(vb === "" || vb === undefined) return -1;
@@ -1257,18 +1270,18 @@ function renderTable(){
     const tooltipFornec = `Cidade: ${r.cidade_fornec||"—"} · UF: ${r.uf_fornec||"—"} · CNPJ: ${r.cnpj_fornec||"—"}`;
     const itens = r.itens || [];
     return `<tr>
-      <td>${r.nro_pedido ?? ""}</td>
-      <td>${r.emissao ?? ""}</td>
-      <td class="fornecedor-cell" title="${tooltipFornec}">${r.nome_fornec ?? ""}</td>
-      <td>${r.grupo_item ?? ""}</td>
-      <td>${r.filial ?? ""}</td>
-      <td class="itens-cell tooltip-trigger">${resumoItens(itens)}${buildItensTooltipHtml(itens)}</td>
-      <td>${r.qtd_itens ?? itens.length}</td>
-      <td>${r.faturar_dia ?? ""}</td>
-      <td>${r.data_entrega ?? ""}</td>
-      <td>${r.entrega_efetiva || "—"}</td>
+      <td>${esc(r.nro_pedido)}</td>
+      <td>${esc(r.emissao)}</td>
+      <td class="fornecedor-cell" title="${esc(tooltipFornec)}">${esc(r.nome_fornec)}</td>
+      <td>${esc(r.grupo_item)}</td>
+      <td>${esc(r.filial)}</td>
+      <td class="itens-cell tooltip-trigger">${esc(resumoItens(itens))}${buildItensTooltipHtml(itens)}</td>
+      <td>${esc(r.qtd_itens ?? itens.length)}</td>
+      <td>${esc(r.faturar_dia)}</td>
+      <td>${esc(r.data_entrega)}</td>
+      <td>${esc(r.entrega_efetiva || "—")}</td>
       <td><span class="badge ${badgeCls}">${badgeLabel}</span></td>
-      <td title="${r.obs ?? ""}">${r.obs ?? ""}</td>
+      <td title="${esc(r.obs)}">${esc(r.obs)}</td>
     </tr>`;
   }).join("");
 }
@@ -1312,13 +1325,13 @@ function imprimirEntregasDoDia(){
     corpo = `<div class="print-empty">Nenhuma entrega prevista para hoje (${dataLabel}).</div>`;
   } else {
     const linhas = pedidosHoje.map(r=>{
-      const itensHtml = (r.itens||[]).map(it=>`<li>${it.descricao} — ${it.qtd} ${it.um||""}</li>`).join("");
+      const itensHtml = (r.itens||[]).map(it=>`<li>${esc(it.descricao)} — ${esc(fmtQtd(it.qtd))} ${esc(it.um)}</li>`).join("");
       const badge = r.reagendadoPorAtraso
-        ? `<span class="print-badge reagendado">Atrasado desde ${r.data_entrega} (${r.diasAtraso}d)</span>`
+        ? `<span class="print-badge reagendado">Atrasado desde ${esc(r.data_entrega)} (${r.diasAtraso}d)</span>`
         : `<span class="print-badge novo">No prazo</span>`;
       return `<tr>
-        <td>${r.nro_pedido ?? ""}</td>
-        <td>${r.nome_fornec ?? ""}</td>
+        <td>${esc(r.nro_pedido)}</td>
+        <td>${esc(r.nome_fornec)}</td>
         <td><ul class="print-itens-lista">${itensHtml}</ul></td>
         <td>${r.qtd_itens ?? (r.itens||[]).length}</td>
         <td>${badge}</td>
@@ -1518,6 +1531,8 @@ function getSharedRenderScript(){
   // Reaproveita as funções já definidas nesta página (sem os manipuladores de upload)
   return `
 ${normalize.toString()}
+${esc.toString()}
+${fmtQtd.toString()}
 const GRUPOS_PERMITIDOS = ${JSON.stringify(GRUPOS_PERMITIDOS)};
 const DIAS_PREVISAO = ${DIAS_PREVISAO};
 ${toDate.toString()}
