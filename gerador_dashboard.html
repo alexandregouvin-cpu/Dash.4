@@ -9,8 +9,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';"></script>
 <style>
   :root{
-    --bg-0:#021D14; --bg-1:#032F21; --bg-2:#0B4A36; --bg-2-hover:#0F5A42;
-    --border:#145C42; --text-primary:#FFFFFF; --text-secondary:#BFEFDA;
+    --bg-0:#003B24; --bg-1:#00331F; --bg-2:#05452F; --bg-2-hover:#0A4F37;
+    --border:#006A46; --accent-green:#00E479; --btn-green:#01A260; --text-primary:#FFFFFF; --text-secondary:#BFEFDA;
     --accent-mint:#9BF0C3; --accent-yellow:#FAEB0A; --accent-red:#E8434F;
     --accent-red-strong:#C00812; --accent-ok:#3ECF8E; --shadow:rgba(0,0,0,0.35);
     --radius:14px;
@@ -20,7 +20,7 @@
   body{
     margin:0;
     font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-    background:linear-gradient(160deg,var(--bg-0) 0%, var(--bg-1) 55%, var(--bg-1) 100%);
+    background:var(--bg-0);
     color:var(--text-primary);
     min-height:100vh;
   }
@@ -58,7 +58,7 @@
     border:none;background:transparent;color:var(--text-secondary);
     padding:8px 18px;border-radius:24px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;
   }
-  .mode-toggle button.active{background:var(--accent-mint);color:#022A1D;}
+  .mode-toggle button.active{background:var(--btn-green);color:#fff;}
 
   main{padding:24px 32px;max-width:1500px;margin:0 auto;}
   body.mode-tv main{padding:20px 32px;max-width:none;min-height:calc(100vh - 84px);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
@@ -84,7 +84,7 @@
   .upload-slot input[type=file]{display:none;}
   .upload-slot .file-name{font-size:12.5px;font-weight:600;margin-top:6px;color:var(--accent-mint);word-break:break-all;}
   .btn{
-    display:inline-block;padding:9px 18px;background:var(--accent-mint);color:#022A1D;
+    display:inline-block;padding:9px 18px;background:var(--btn-green);color:#fff;
     border-radius:8px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif;
   }
   .btn:hover{filter:brightness(0.95);}
@@ -107,7 +107,7 @@
 
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:20px;}
   body.mode-tv .kpis{flex:0 0 auto;}
-  .kpi{position:relative;background:linear-gradient(160deg, var(--bg-2-hover) 0%, var(--bg-2) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:0 10px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.06);overflow:hidden;transition:transform .15s ease;}
+  .kpi{position:relative;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:0 10px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.06);overflow:hidden;transition:transform .15s ease;}
   .kpi .hex{position:absolute;top:14px;right:14px;width:26px;height:26px;clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0% 50%);}
   .kpi.total .hex{background:var(--accent-mint);}
   .kpi.atraso .hex{background:var(--accent-red-strong);}
@@ -121,8 +121,8 @@
   .kpi.chegando{border-color:var(--accent-mint);box-shadow:0 10px 28px rgba(155,240,195,0.15), inset 0 1px 0 rgba(255,255,255,0.08);}
   .kpi.chegando .hex{background:var(--accent-mint);}
   .kpi .label{font-size:11.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
-  .kpi .value{font-family:'Poppins',sans-serif;font-size:30px;font-weight:800;margin-top:6px;}
-  .kpi .value.muted{font-size:13px;font-weight:600;color:var(--text-secondary);font-family:'Inter',sans-serif;}
+  .kpi .value{font-family:'Poppins',sans-serif;font-size:30px;font-weight:800;margin-top:6px;color:var(--accent-green);}
+  .kpi .value.muted{font-size:13px;font-weight:600;color:var(--text-secondary) !important;font-family:'Inter',sans-serif;}
   .kpi .value-unit{font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:var(--text-secondary);margin-left:6px;}
   .kpi .kpi-sub{font-size:12px;font-weight:500;color:var(--text-secondary);margin-top:8px;line-height:1.4;font-family:'Inter',sans-serif;}
   .kpi .kpi-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
@@ -134,8 +134,8 @@
 
   /* Previsão de chegada — seção principal (previsibilidade) */
   .forecast-section{
-    background:linear-gradient(160deg, var(--bg-2-hover) 0%, var(--bg-2) 100%);
-    border:1px solid var(--accent-mint);border-radius:var(--radius);
+    background:var(--bg-2);
+    border:1px solid var(--border);border-radius:var(--radius);
     padding:20px 22px;margin-bottom:20px;box-shadow:0 12px 30px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.06);
   }
   .forecast-header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
@@ -158,7 +158,8 @@
   }
   .forecast-day{font-size:11.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;font-weight:700;margin-top:6px;}
   .forecast-date{font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
-  .forecast-number{font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;line-height:1;}
+  .forecast-number{font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--accent-green);}
+  .forecast-card.empty .forecast-number{color:var(--text-primary);}
   .forecast-label{font-size:11px;color:var(--text-secondary);margin-top:2px;}
   .forecast-reagendado-tag{font-size:9.5px;font-weight:700;color:var(--accent-yellow);margin-top:4px;background:rgba(250,235,10,0.12);border-radius:8px;padding:2px 6px;}
   .forecast-fornecedores{font-size:10.5px;color:var(--accent-mint);margin-top:6px;font-weight:600;cursor:help;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -170,7 +171,7 @@
     background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-secondary);
     transition:all .12s ease;
   }
-  .chip.active{background:var(--accent-mint);color:#022A1D;border-color:var(--accent-mint);}
+  .chip.active{background:var(--btn-green);color:#fff;border-color:var(--btn-green);}
   .chip:hover{border-color:var(--accent-mint);}
 
   .itens-cell{cursor:help;border-bottom:1px dotted var(--text-secondary);}
@@ -258,7 +259,7 @@
 
   .generate-bar{
     display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
-    background:var(--bg-2);border:1px solid var(--accent-mint);border-radius:var(--radius);
+    background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);
     padding:18px 22px;margin-bottom:22px;
   }
   .generate-bar p{margin:0;font-size:13px;color:var(--text-secondary);max-width:520px;}
@@ -274,21 +275,21 @@
       display:block !important;
       color:#111; font-family:'Inter',Arial,sans-serif;
     }
-    .print-header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #032F21;padding-bottom:10px;margin-bottom:14px;}
-    .print-header .logo-badge{background:#032F21;padding:6px 12px;border-radius:6px;display:inline-flex;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+    .print-header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #003B24;padding-bottom:10px;margin-bottom:14px;}
+    .print-header .logo-badge{background:#003B24;padding:6px 12px;border-radius:6px;display:inline-flex;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
     .print-header .logo-badge img{height:32px;display:block;}
     .print-header .titulo{text-align:right;}
-    .print-header .titulo h1{margin:0;font-size:18px;color:#032F21;}
+    .print-header .titulo h1{margin:0;font-size:18px;color:#003B24;}
     .print-header .titulo p{margin:2px 0 0;font-size:12px;color:#555;}
     .print-resumo{display:flex;gap:18px;margin-bottom:14px;font-size:12.5px;color:#333;}
-    .print-resumo strong{color:#032F21;}
+    .print-resumo strong{color:#003B24;}
     .print-table{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
     .print-table th:nth-child(1), .print-table td:nth-child(1){width:8%;}
     .print-table th:nth-child(2), .print-table td:nth-child(2){width:20%;}
     .print-table th:nth-child(3), .print-table td:nth-child(3){width:48%;}
     .print-table th:nth-child(4), .print-table td:nth-child(4){width:10%;}
     .print-table th:nth-child(5), .print-table td:nth-child(5){width:14%;}
-    .print-table th{background:#fff;color:#032F21;text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.03em;font-weight:800;border-bottom:2px solid #032F21;white-space:normal !important;}
+    .print-table th{background:#fff;color:#003B24;text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.03em;font-weight:800;border-bottom:2px solid #003B24;white-space:normal !important;}
     .print-table td{
       padding:6px 8px;border-bottom:1px solid #ccc;vertical-align:top;
       white-space:normal !important; overflow:visible !important; max-width:none !important; text-overflow:clip !important;
@@ -458,7 +459,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v27</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v28</footer>
 
 <script>
 /* =========================================================
@@ -830,7 +831,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v27`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v28`;
 
   renderAll();
 }
@@ -1003,12 +1004,12 @@ function renderKpis(){
     <div class="kpi fornecedor"><div class="hex"></div><div class="label">Fornecedores únicos</div><div class="value">${fornecedores}</div><div class="kpi-sub">${fornecedoresChegando} com pedido em 14 dias</div></div>
     <div class="kpi recebimento"><div class="hex"></div><div class="label">Próximo recebimento</div>${
       recebimento
-        ? `<div class="value" style="font-size:22px;">${recebimento.label}</div><div class="kpi-sub">${recebimento.quando}</div>`
+        ? `<div class="value" style="font-size:22px;color:var(--text-primary);">${recebimento.label}</div><div class="kpi-sub">${recebimento.quando}</div>`
         : `<div class="value muted">—</div>`
     }</div>
     <div class="kpi topfornecedor"><div class="hex"></div><div class="label">Fornecedor c/ mais pedidos</div>${
       topFornecedor
-        ? `<div class="value" style="font-size:16px;line-height:1.3;">${esc(topFornecedor.nome)}</div><div class="kpi-sub">${topFornecedor.pedidos} pedidos</div>`
+        ? `<div class="value" style="font-size:16px;line-height:1.3;color:var(--text-primary);">${esc(topFornecedor.nome)}</div><div class="kpi-sub">${topFornecedor.pedidos} pedidos</div>`
         : `<div class="value muted">—</div>`
     }</div>
     <div class="kpi pendencias"><div class="hex"></div><div class="label">Atrasados reagendados</div><div class="value">${pendenciasCount}</div><div class="kpi-sub">${pendenciasCount>0?"sem confirmação — veja Previsão/Próximas entregas":"tudo em dia"}</div></div>
