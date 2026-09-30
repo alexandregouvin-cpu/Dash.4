@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Controle de Gastos</title>
+  <meta name="description" content="Anote todos os seus pagamentos do dia e acompanhe para onde vai seu dinheiro.">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gastos">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 id="view-title">Hoje</h1>
+    <span id="today-label" class="muted"></span>
+  </header>
+
+  <main>
+    <!-- HOJE -->
+    <section id="view-today" class="view" data-title="Hoje">
+      <div class="card hero">
+        <span class="label">Gasto hoje</span>
+        <strong id="today-total" class="big">R$ 0,00</strong>
+        <div id="daily-limit" class="hint" hidden></div>
+        <div class="hero-row">
+          <div><span class="label">No mês</span><strong id="month-total">R$ 0,00</strong></div>
+          <div><span class="label">Média/dia</span><strong id="month-avg">R$ 0,00</strong></div>
+        </div>
+        <div id="budget-box" hidden>
+          <div class="meter"><div id="budget-bar"></div></div>
+          <div id="budget-text" class="hint"></div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Registro rápido</h2>
+      <div id="quick-cats" class="quick-cats"></div>
+
+      <h2 class="section-title">Pagamentos de hoje</h2>
+      <ul id="today-list" class="list"></ul>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section id="view-history" class="view" data-title="Histórico" hidden>
+      <div class="month-nav">
+        <button class="icon-btn" data-month-shift="-1" aria-label="Mês anterior">‹</button>
+        <strong class="month-label"></strong>
+        <button class="icon-btn" data-month-shift="1" aria-label="Próximo mês">›</button>
+      </div>
+      <div id="history-filter" class="chips scroll"></div>
+      <div id="history-total" class="hint center"></div>
+      <div id="history-list"></div>
+    </section>
+
+    <!-- RESUMO -->
+    <section id="view-summary" class="view" data-title="Resumo" hidden>
+      <div class="month-nav">
+        <button class="icon-btn" data-month-shift="-1" aria-label="Mês anterior">‹</button>
+        <strong class="month-label"></strong>
+        <button class="icon-btn" data-month-shift="1" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="stats">
+        <div class="card stat"><span class="label">Total</span><strong id="sum-total"></strong></div>
+        <div class="card stat"><span class="label">Média por dia</span><strong id="sum-avg"></strong></div>
+        <div class="card stat"><span class="label">Lançamentos</span><strong id="sum-count"></strong></div>
+        <div class="card stat"><span class="label" id="sum-proj-label">Projeção do mês</span><strong id="sum-proj"></strong></div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Por categoria</h2>
+        <ul id="sum-cats" class="bars"></ul>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Últimos 7 dias</h2>
+        <div id="sum-week" class="week"></div>
+      </div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section id="view-settings" class="view" data-title="Ajustes" hidden>
+      <form id="settings-form" class="card form">
+        <h2 class="card-title">Orçamento</h2>
+        <label>Orçamento mensal
+          <input name="monthlyBudget" inputmode="decimal" placeholder="Ex.: 3.000,00" autocomplete="off">
+        </label>
+        <label>Limite por dia (opcional)
+          <input name="dailyLimit" inputmode="decimal" placeholder="Ex.: 100,00" autocomplete="off">
+        </label>
+        <label class="switch"><input type="checkbox" name="budgetAlerts"> Avisar ao atingir 80% e 100%</label>
+
+        <h2 class="card-title">Notificações</h2>
+        <label class="switch"><input type="checkbox" name="reminderEnabled"> Lembrete diário para registrar gastos</label>
+        <label>Horário do lembrete
+          <input type="time" name="reminderTime">
+        </label>
+        <p id="notif-status" class="hint"></p>
+        <button type="button" id="test-notif" class="btn secondary">Enviar notificação de teste</button>
+      </form>
+
+      <div class="card form">
+        <h2 class="card-title">Seus dados</h2>
+        <p class="hint">Tudo fica salvo só neste aparelho. Faça backup de vez em quando.</p>
+        <button type="button" id="export-csv" class="btn secondary">Exportar planilha (CSV)</button>
+        <button type="button" id="export-json" class="btn secondary">Baixar backup</button>
+        <label class="btn secondary file-btn">Restaurar backup
+          <input type="file" id="import-json" accept="application/json,.json" hidden>
+        </label>
+        <button type="button" id="clear-data" class="btn danger">Apagar todos os gastos</button>
+      </div>
+      <p class="hint center" id="install-hint"></p>
+    </section>
+  </main>
+
+  <button id="fab" class="fab" aria-label="Adicionar gasto">+</button>
+
+  <nav class="tabbar">
+    <button data-view="today" class="active"><span>📅</span>Hoje</button>
+    <button data-view="history"><span>🧾</span>Histórico</button>
+    <button data-view="summary"><span>📊</span>Resumo</button>
+    <button data-view="settings"><span>⚙️</span>Ajustes</button>
+  </nav>
+
+  <!-- Formulário de gasto -->
+  <dialog id="expense-dialog" class="sheet">
+    <form id="expense-form" method="dialog" novalidate>
+      <div class="sheet-head">
+        <h2 id="expense-title">Novo gasto</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Fechar">✕</button>
+      </div>
+      <label class="amount-label">Valor
+        <input id="amount" name="amount" class="amount" inputmode="numeric" autocomplete="off" value="R$ 0,00">
+      </label>
+      <p class="error" data-error="amount"></p>
+
+      <fieldset>
+        <legend>Categoria</legend>
+        <div id="category-grid" class="cat-grid"></div>
+      </fieldset>
+      <p class="error" data-error="category"></p>
+
+      <label>Descrição (opcional)
+        <input name="note" maxlength="120" placeholder="Ex.: almoço, posto, Uber…" autocomplete="off">
+      </label>
+
+      <div class="row">
+        <label>Data
+          <input type="date" name="date" required>
+        </label>
+      </div>
+      <p class="error" data-error="date"></p>
+
+      <fieldset>
+        <legend>Forma de pagamento</legend>
+        <div id="payment-chips" class="chips"></div>
+      </fieldset>
+
+      <div class="sheet-actions">
+        <button type="button" id="delete-expense" class="btn danger" hidden>Excluir</button>
+        <button type="submit" class="btn primary">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
