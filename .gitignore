@@ -1,0 +1,5 @@
+# Dados reais gerados pelo coletor (contêm informações financeiras)
+dados/faturas.js
+pdfs/
+__pycache__/
+.env
