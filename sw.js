@@ -1,6 +1,6 @@
 // Service worker: funcionamento offline + lembrete diário com o app fechado.
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const APP_CACHE = `gastos-app-${VERSION}`;
 const STATE_CACHE = 'gastos-shared-state';
 const STATE_URL = new URL('./__state.json', self.registration.scope).href;
