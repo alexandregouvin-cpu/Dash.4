@@ -322,6 +322,8 @@
     padding:18px 22px;margin-bottom:22px;
   }
   .generate-bar p{margin:0;font-size:13px;color:var(--text-secondary);max-width:520px;}
+  .status-nuvem{display:block;margin-top:6px;font-weight:600;color:var(--accent-mint);}
+  .status-nuvem.erro{color:#ffb3b8;}
   .hide{display:none !important;}
 
   /* Impressão — relatório de entregas do dia (A4) */
@@ -435,7 +437,7 @@
   <div id="dashboardContent" style="display:none;">
 
     <div class="generate-bar">
-      <p><strong>Dados atualizados.</strong> Amanhã, para atualizar de novo, é só clicar em "Trocar relatório" e selecionar o arquivo do dia — sem precisar de nada além deste mesmo arquivo.</p>
+      <p><strong>Dados atualizados.</strong> Amanhã, para atualizar de novo, é só clicar em "Trocar relatório" e selecionar o arquivo do dia — sem precisar de nada além deste mesmo arquivo.<span id="statusNuvem" class="status-nuvem" hidden></span></p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn big" id="btnTrocarArquivo">🔄 Atualizar dados (trocar relatório)</button>
         <button class="btn secondary" id="btnImprimirHoje">🖨️ Imprimir entregas de hoje</button>
@@ -508,7 +510,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v35</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v36</footer>
 
 <script>
 /* =========================================================
@@ -640,6 +642,7 @@ els.fileInputPrincipal.addEventListener("change", e=>{
     }
   };
   reader.readAsArrayBuffer(file);
+  e.target.value = ""; // permite escolher de novo um arquivo com o mesmo nome (o relatório do dia seguinte)
 });
 
 function findSheet(wb, wantedNormalized){
@@ -673,12 +676,13 @@ els.fileInputEfetiva.addEventListener("change", e=>{
       preselect(els.mapDataEfetiva, efetivaHeaders, ["efetiv","real","entrega"]);
       els.mappingRow.classList.remove("hide");
       buildEntregaEfetivaMap();
-      if(processedRows.length) renderAll(); // re-renderiza se já havia dashboard pronto
+      if(processedRows.length){ renderAll(); agendarPublicacaoTV(); } // re-renderiza (e republica) se já havia dashboard pronto
     }catch(err){
       console.error(err);
     }
   };
   reader.readAsArrayBuffer(file);
+  e.target.value = ""; // permite escolher de novo um arquivo com o mesmo nome (o relatório do dia seguinte)
 });
 
 function preselect(selectEl, headers, hints){
@@ -686,8 +690,8 @@ function preselect(selectEl, headers, hints){
   if(found) selectEl.value = found;
 }
 
-els.mapPedido.addEventListener("change", ()=>{ buildEntregaEfetivaMap(); if(processedRows.length) renderAll(); });
-els.mapDataEfetiva.addEventListener("change", ()=>{ buildEntregaEfetivaMap(); if(processedRows.length) renderAll(); });
+els.mapPedido.addEventListener("change", ()=>{ buildEntregaEfetivaMap(); if(processedRows.length){ renderAll(); agendarPublicacaoTV(); } });
+els.mapDataEfetiva.addEventListener("change", ()=>{ buildEntregaEfetivaMap(); if(processedRows.length){ renderAll(); agendarPublicacaoTV(); } });
 
 function buildEntregaEfetivaMap(){
   if(!efetivaRawRows) return;
@@ -880,9 +884,11 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v35`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v36`;
 
   renderAll();
+  nuvem.arquivo = fileNameStr;
+  agendarPublicacaoTV();
 }
 
 /* =========================================================
@@ -1303,6 +1309,127 @@ els.modeToggle.querySelectorAll("button").forEach(btn=>{
     document.body.classList.add("mode-"+btn.dataset.mode);
   });
 });
+
+/* =========================================================
+   RELATÓRIO NA NUVEM DO LINK (para a TV carregar sozinha)
+   Quem pode editar o link (você) publica o relatório processado;
+   quem só visualiza (a TV) baixa a versão mais recente e atualiza
+   sozinho. Fora do link publicado (arquivo aberto no computador),
+   window.claude não existe e nada disso roda.
+   ========================================================= */
+const nuvem = {db:null, assets:null, assetsPronto:null, idAtual:null, arquivo:"", timer:null};
+const DOC_NUVEM = "painel/atual";
+
+function statusNuvem(msg, erro){
+  const el = document.getElementById("statusNuvem");
+  if(!el) return;
+  el.hidden = !msg;
+  el.textContent = msg || "";
+  el.classList.toggle("erro", !!erro);
+}
+
+// Datas viram "AAAA-MM-DD" pelo calendário local, para a TV ler o mesmo dia que você viu
+function jsonComDatasLocais(obj){
+  return JSON.stringify(obj, function(k, v){
+    const raw = this[k];
+    if(raw instanceof Date){
+      return `${raw.getFullYear()}-${String(raw.getMonth()+1).padStart(2,"0")}-${String(raw.getDate()).padStart(2,"0")}`;
+    }
+    return v;
+  });
+}
+
+function agendarPublicacaoTV(){
+  clearTimeout(nuvem.timer);
+  nuvem.timer = setTimeout(publicarParaTV, 1200); // junta relatório + planilha efetiva numa publicação só
+}
+
+async function publicarParaTV(){
+  if(!nuvem.db) return; // arquivo local: sem nuvem
+  if(nuvem.assetsPronto) await nuvem.assetsPronto;
+  if(!nuvem.assets){
+    statusNuvem("Este acesso só visualiza: o relatório carregado aqui não é enviado para a TV.");
+    return;
+  }
+  statusNuvem("Enviando para a TV…");
+  try{
+    const agora = new Date();
+    const payload = {
+      versao: 1,
+      arquivo: nuvem.arquivo,
+      publicadoEm: agora.toISOString(),
+      rows: processedRows,
+      efetiva: entregaEfetivaMap && entregaEfetivaMap.size ? Object.fromEntries(entregaEfetivaMap) : null
+    };
+    const blob = new Blob([jsonComDatasLocais(payload)], {type:"application/json"});
+    const up = await nuvem.assets.upload(blob, {type:"application/json"});
+    const anterior = nuvem.idAtual;
+    nuvem.idAtual = up.id; // evita recarregar o que acabamos de enviar quando o aviso voltar
+    await nuvem.db.doc(DOC_NUVEM).set({assetId: up.id, arquivo: nuvem.arquivo, publicadoEm: payload.publicadoEm, pedidos: processedRows.length});
+    if(anterior && anterior !== up.id) nuvem.assets.delete(anterior).catch(()=>{}); // versão anterior não é mais usada
+    statusNuvem(`Enviado para a TV às ${agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}. A TV atualiza sozinha em instantes.`);
+  }catch(err){
+    console.error("Falha ao publicar para a TV:", err);
+    const code = err && err.code;
+    const msg = code === "too_large" ? "o relatório processado passou de 20 MB"
+      : code === "quota_or_state" || code === "quota_exceeded" ? "o espaço de armazenamento do link está cheio"
+      : code === "rate_limited" || code === "resource_exhausted" ? "muitos envios seguidos; tente de novo em um minuto"
+      : code === "upstream_auth" ? "sua sessão expirou; recarregue a página e entre de novo"
+      : "falha de comunicação; carregue o relatório de novo";
+    statusNuvem(`Não foi possível enviar para a TV: ${msg}.`, true);
+  }
+}
+
+function aplicarDadosDaNuvem(payload){
+  processedRows = Array.isArray(payload.rows) ? payload.rows : [];
+  entregaEfetivaMap = payload.efetiva ? new Map(Object.entries(payload.efetiva)) : null;
+  nuvem.arquivo = payload.arquivo || "";
+  if(processedRows.length === 0) return;
+  els.emptyState.classList.add("hide");
+  els.dashboardContent.style.display = "block";
+  els.setupArea.style.display = "none";
+  const quando = payload.publicadoEm ? new Date(payload.publicadoEm).toLocaleString("pt-BR") : "";
+  els.footerInfo.textContent = `Fonte: ${payload.arquivo || "relatório publicado"} · Enviado em ${quando} · atualiza sozinho · Apis Flora · build v36`;
+  renderAll();
+}
+
+async function carregarDaNuvem(meta){
+  try{
+    const r = await fetch("/_blob/" + meta.assetId);
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    const payload = await r.json();
+    nuvem.idAtual = meta.assetId;
+    aplicarDadosDaNuvem(payload);
+  }catch(err){
+    console.error("Falha ao baixar o relatório publicado:", err);
+    // tenta de novo no próximo aviso de mudança; enquanto isso, mantém o que está na tela
+  }
+}
+
+async function iniciarNuvem(){
+  if(!window.claude || typeof window.claude.use !== "function") return;
+  const db = await window.claude.use("db");
+  if(!db) return;
+  nuvem.db = db;
+  nuvem.assetsPronto = window.claude.use("assets").then(a=>{ nuvem.assets = a; }).catch(()=>{}); // null para quem só visualiza
+  db.doc(DOC_NUVEM).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const meta = snap.data();
+    if(!meta || !meta.assetId || meta.assetId === nuvem.idAtual) return;
+    carregarDaNuvem(meta);
+  }, err=>console.warn("Aviso de atualização do relatório indisponível:", err && err.code));
+}
+iniciarNuvem();
+
+// A TV fica ligada dias seguidos: na virada do dia, recalcula "hoje", atrasos e a janela de 14 dias
+let diaRenderizado = new Date().toDateString();
+setInterval(()=>{
+  const hojeStr = new Date().toDateString();
+  if(hojeStr !== diaRenderizado){
+    diaRenderizado = hojeStr;
+    if(processedRows.length) renderAll();
+  }
+}, 5*60*1000);
 
 setupModoTV();
 function setupModoTV(){
