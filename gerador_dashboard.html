@@ -64,8 +64,7 @@
   .btn-tela-cheia:hover{border-color:var(--accent-mint);}
   .btn-tela-cheia svg{width:16px;height:16px;}
   .tv-clock{display:none;text-align:right;line-height:1.1;}
-  .tv-clock b{display:block;font:800 44px/1 'Inter',sans-serif;letter-spacing:-.01em;font-variant-numeric:tabular-nums;}
-  .tv-clock span{font-size:16px;color:var(--text-secondary);}
+  .tv-clock span{font-size:20px;font-weight:600;color:var(--text-secondary);}
 
   main{padding:24px 32px;max-width:1500px;margin:0 auto;}
   /* Modo TV: desenhado para 1920x1080 (TV de 43"), leitura a distância e sem rolagem.
@@ -509,7 +508,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v34</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v35</footer>
 
 <script>
 /* =========================================================
@@ -881,7 +880,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v34`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v35`;
 
   renderAll();
 }
@@ -1307,7 +1306,7 @@ els.modeToggle.querySelectorAll("button").forEach(btn=>{
 
 setupModoTV();
 function setupModoTV(){
-  // Tela cheia + relógio + zoom para 4K + rolagem automática da lista + cursor oculto, só no Modo TV.
+  // Tela cheia + data + zoom para 4K + rolagem automática da lista + cursor oculto, só no Modo TV.
   const body = document.body;
   const btnFull = document.getElementById("btnTelaCheia");
   const relogio = document.getElementById("tvClock");
@@ -1337,11 +1336,10 @@ function setupModoTV(){
     setTimeout(ajustarZoom, 0);
   });
 
-  // Relógio
-  const hora = new Intl.DateTimeFormat("pt-BR", {hour:"2-digit", minute:"2-digit"});
+  // Data do dia (sem hora)
   const data = new Intl.DateTimeFormat("pt-BR", {weekday:"long", day:"2-digit", month:"long"});
-  function tic(){ const d = new Date(); const dt = data.format(d); relogio.innerHTML = `<b>${hora.format(d)}</b><span>${dt.charAt(0).toUpperCase()+dt.slice(1)}</span>`; }
-  tic(); setInterval(tic, 15000);
+  function tic(){ const dt = data.format(new Date()); relogio.innerHTML = `<span>${dt.charAt(0).toUpperCase()+dt.slice(1)}</span>`; }
+  tic(); setInterval(tic, 60000);
 
   // Layout do Modo TV é feito para 1920 de largura; em telas maiores (4K) amplia proporcionalmente
   function ajustarZoom(){
