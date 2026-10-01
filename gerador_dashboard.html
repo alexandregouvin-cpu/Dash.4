@@ -109,26 +109,45 @@
   .resumo{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:12px;}
   @media (max-width:900px){ .resumo{grid-template-columns:minmax(0,1fr);} }
   .rs-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);min-width:0;}
-  .rs-main{padding:18px 20px;display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:18px 28px;align-items:end;}
-  @media (max-width:640px){ .rs-main{grid-template-columns:minmax(0,1fr);} }
+  .rs-main{padding:18px 20px;display:grid;gap:16px;}
   .rs-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);font-weight:600;}
   .rs-hint{font-size:11.5px;color:var(--text-secondary);opacity:.7;margin-left:8px;text-transform:none;letter-spacing:0;font-weight:500;}
   .rs-big{font:800 56px/1 'Inter',sans-serif;color:var(--accent-green);margin-top:8px;letter-spacing:-.02em;}
   .rs-sub{font-size:12.5px;color:var(--text-secondary);margin-top:6px;}
-  .rs-heat-wrap{overflow-x:auto;min-width:0;}
-  .rs-heat{display:grid;grid-template-columns:repeat(14,minmax(24px,1fr));gap:3px;min-width:380px;}
-  .rs-dia{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
-  .rs-sq{position:relative;width:100%;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Inter',sans-serif;}
+  .rs-heat-wrap{overflow-x:auto;overflow-y:hidden;min-width:0;}
+  .rs-heat{display:grid;grid-template-columns:repeat(14,minmax(40px,1fr));gap:4px;min-width:600px;}
+  .rs-dia{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;cursor:pointer;border-radius:8px;padding:2px 0 4px;}
+  .rs-dia:focus-visible{outline:2px solid var(--accent-yellow);}
+  .rs-wd{font-size:10.5px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;line-height:1;}
+  .rs-dt{font-size:10.5px;color:var(--text-secondary);opacity:.7;line-height:1;margin-bottom:2px;}
+  .rs-dia.fds .rs-wd,.rs-dia.fds .rs-dt{opacity:.45;}
+  .rs-dia.recv .rs-wd{color:var(--accent-yellow);}
+  .rs-dia.hoje .rs-wd{color:var(--text-primary);}
+  .rs-sq{position:relative;width:100%;height:48px;border-radius:7px;display:flex;align-items:center;justify-content:center;font:700 15px/1 'Inter',sans-serif;transition:transform .12s ease;}
+  .rs-dia:hover .rs-sq{transform:translateY(-1px);}
   .rs-dia.recv .rs-sq{box-shadow:inset 0 -3px 0 var(--accent-yellow);}
-  .rs-dia.hoje .rs-sq{outline:2px solid var(--text-primary);outline-offset:-2px;}
+  .rs-dia[aria-pressed="true"] .rs-sq{outline:2px solid var(--text-primary);outline-offset:1px;}
   .rs-sq.late::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#FF9632;}
-  .rs-w{font-size:10px;color:var(--text-secondary);opacity:.75;line-height:1;}
-  .rs-dia.recv .rs-w{color:var(--accent-yellow);opacity:1;font-weight:700;}
-  .rs-dia.hoje .rs-w{color:var(--text-primary);opacity:1;font-weight:800;}
-  .rs-cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:11px;color:var(--text-secondary);opacity:.85;margin-top:6px;}
+  .rs-cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:11px;color:var(--text-secondary);opacity:.85;margin-top:8px;}
   .rs-scale{display:inline-flex;align-items:center;gap:5px;}
   .rs-scale i{width:16px;height:10px;border-radius:2px;display:inline-block;}
-  .rs-grupos{grid-column:1/-1;display:grid;gap:8px;}
+  .rs-top{display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:16px 28px;align-items:end;}
+  @media (max-width:640px){ .rs-top{grid-template-columns:minmax(0,1fr);} }
+  .rs-det{border-top:1px solid rgba(255,255,255,.08);padding-top:12px;display:grid;gap:8px;}
+  .rs-det-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;}
+  .rs-det-h b{font:700 14px/1.3 'Poppins',sans-serif;}
+  .rs-det-h .rc{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-yellow);border:1px solid rgba(250,235,10,.45);padding:1px 7px;border-radius:10px;}
+  .rs-det-h .q{font-size:12px;color:var(--text-secondary);}
+  .rs-det-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:6px 18px;}
+  .rs-ped{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.03);min-width:0;}
+  .rs-ped .f{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rs-ped .i{grid-column:1;font-size:11.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rs-ped .p{grid-row:1/3;grid-column:2;text-align:right;font-size:11.5px;color:var(--text-secondary);white-space:nowrap;}
+  .rs-ped .late{color:#FF9632;font-weight:700;display:block;}
+  .rs-ped.reag{box-shadow:inset 3px 0 0 #FF9632;}
+  .rs-det .vazio{font-size:12.5px;color:var(--text-secondary);opacity:.8;}
+  .rs-det .mais{font-size:12px;color:var(--text-secondary);opacity:.8;}
+  .rs-grupos{display:grid;gap:8px;min-width:0;}
   .rs-gnum{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;}
   .rs-gb{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;display:grid;gap:2px;min-width:0;color:var(--text-primary);font-family:'Inter',sans-serif;}
   .rs-gb:hover{border-color:var(--text-secondary);}
@@ -137,7 +156,7 @@
   .rs-gb .v{font:700 22px/1.1 'Inter',sans-serif;}
   .rs-gb .v small{font-size:12px;font-weight:600;color:var(--text-secondary);margin-left:5px;}
   .rs-gb .d{font-size:11.5px;color:var(--text-secondary);opacity:.8;}
-  .rs-side{display:grid;gap:12px;}
+  .rs-side{display:grid;gap:12px;align-content:start;}
   .rs-mini{padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;}
   .rs-mini .t{font-weight:600;font-size:13px;}
   .rs-mini .d{font-size:12px;color:var(--text-secondary);opacity:.85;}
@@ -149,40 +168,10 @@
   .rs-apoio b{color:var(--text-primary);font-weight:600;}
   body.mode-tv .resumo{flex:0 0 auto;margin-bottom:20px;}
   body.mode-tv .rs-big{font-size:72px;}
-  body.mode-tv .rs-sq{height:56px;font-size:18px;}
+  body.mode-tv .rs-sq{height:60px;font-size:20px;}
   body.mode-tv .rs-mini .v{font-size:30px;}
 
-  /* Previsão de chegada — seção principal (previsibilidade) */
-  .forecast-section{
-    background:var(--bg-2);
-    border:1px solid var(--border);border-radius:var(--radius);
-    padding:20px 22px;margin-bottom:20px;box-shadow:0 12px 30px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.06);
-  }
-  .forecast-header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
-  .forecast-header h2{font-size:16px;margin:0;font-weight:700;}
-  .forecast-header p{margin:0;font-size:12px;color:var(--accent-mint);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
   html,body{overflow-x:hidden;}
-  .forecast-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:1fr;gap:10px;}
-  body.mode-tv .forecast-grid{flex:1;}
-  .forecast-card{
-    position:relative;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;
-    padding:14px 10px;text-align:center;min-height:130px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;
-    transition:transform .15s ease, background .15s ease;
-  }
-  .forecast-card.recebimento{border-color:var(--accent-yellow);background:rgba(250,235,10,0.06);}
-  .forecast-card.empty{opacity:.45;}
-  .forecast-tag{
-    position:absolute;top:-9px;left:50%;transform:translateX(-50%);
-    background:var(--accent-yellow);color:var(--bg-0);font-size:9px;font-weight:800;
-    padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;
-  }
-  .forecast-day{font-size:11.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.03em;font-weight:700;margin-top:6px;}
-  .forecast-date{font-size:11px;color:var(--text-secondary);margin-bottom:4px;}
-  .forecast-number{font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--accent-green);}
-  .forecast-card.empty .forecast-number{color:var(--text-primary);}
-  .forecast-label{font-size:11px;color:var(--text-secondary);margin-top:2px;}
-  .forecast-reagendado-tag{font-size:9.5px;font-weight:700;color:var(--accent-yellow);margin-top:4px;background:rgba(250,235,10,0.12);border-radius:8px;padding:2px 6px;}
-  .forecast-fornecedores{font-size:10.5px;color:var(--accent-mint);margin-top:6px;font-weight:600;cursor:help;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   /* Chips de grupo (multi-seleção) */
   .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
@@ -398,13 +387,6 @@
 
     <div class="resumo" id="kpis" style="margin-bottom:20px;"></div>
 
-    <div class="forecast-section">
-      <div class="forecast-header">
-        <h2>📦 Previsão de chegada — próximos 14 dias</h2>
-        <p>Recebimento às terças e quintas-feiras</p>
-      </div>
-      <div class="forecast-grid" id="forecastCards"></div>
-    </div>
 
 
     <div class="top-list" id="topListPanel">
@@ -468,7 +450,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v29</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v30</footer>
 
 <script>
 /* =========================================================
@@ -564,7 +546,7 @@ const els = {};
 ["fileInputPrincipal","fileNamePrincipal","slotPrincipal",
  "fileInputEfetiva","fileNameEfetiva","slotEfetiva","mappingRow","mapPedido","mapDataEfetiva",
  "statusBar","setupArea","dashboardContent","emptyState",
- "kpis","forecastCards","tableBody","rowCount","searchBox","grupoChips","filialFilter","prazoFilter",
+ "kpis","tableBody","rowCount","searchBox","grupoChips","filialFilter","prazoFilter",
  "footerInfo","topListBody","modeToggle","btnGerar","btnTrocarArquivo",
  "searchBoxProx","grupoChipsProx","filialFilterProx",
  "printArea","btnImprimirHoje"
@@ -840,7 +822,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v29`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v30`;
 
   renderAll();
 }
@@ -849,76 +831,15 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
    RENDERIZAÇÃO
    ========================================================= */
 function renderAll(){
-  const etapas = [calcularPendenciasEntregaEfetiva, populateFilterOptions, populateTopListFilters, renderForecast, renderKpis, renderTopList, renderTable];
+  const etapas = [calcularPendenciasEntregaEfetiva, populateFilterOptions, populateTopListFilters, renderKpis, renderTopList, renderTable];
   etapas.forEach(fn=>{
     try{ fn(); }
     catch(err){ console.error(`Falha ao renderizar "${fn.name}":`, err); }
   });
 }
 
-let forecastTotalCount = 0;
-let forecastItensTotal = 0;
 
-const DIAS_PREVISAO = 14;
-
-function renderForecast(){
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
-  const DIAS_SEMANA = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-  let totalPedidosPeriodo = 0;
-  let totalItensPeriodo = 0;
-
-  const cardsHtml = [];
-  for(let i=0;i<DIAS_PREVISAO;i++){
-    const d = new Date(hoje);
-    d.setDate(d.getDate()+i);
-    const grupos = processedRows.filter(g=>{
-      if(g.excluirDeChegada) return false; // já entregue: não é mais "a chegar"
-      const gd = toDate(g.dataChegadaExibicao_raw);
-      if(!gd || gd.getTime() !== d.getTime()) return false;
-      return statusPrazo(g.data_entrega_raw, g.emissao_raw).key !== "inconsistente";
-    });
-    const pedidos = grupos.length;
-    const reagendados = grupos.filter(g=>g.reagendadoPorAtraso);
-    const itensTotal = grupos.reduce((s,g)=>s+g.qtd_itens,0);
-    totalPedidosPeriodo += pedidos;
-    totalItensPeriodo += itensTotal;
-    const isRecebimento = d.getDay()===2 || d.getDay()===4; // terça ou quinta
-    const dataLabel = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
-
-    // Monta o conteúdo do tooltip: cada pedido do dia, com seus itens (produto — qtd UM)
-    // Pedidos reagendados (atrasados sem confirmação) mostram a data original prometida.
-    let tooltipHtml = "";
-    let resumoLabel = "Sem chegadas previstas";
-    if(pedidos > 0){
-      const fornecedores = [...new Set(grupos.map(g=>g.nome_fornec))];
-      resumoLabel = esc(fornecedores.slice(0,2).join(", ")) + (fornecedores.length>2 ? ` +${fornecedores.length-2}` : "");
-      const blocos = grupos.map(g=>{
-        const linhasItens = g.itens.map(it=>`
-          <div class="tooltip-row"><span class="prod">${esc(it.descricao)}</span><span class="qty">${esc(fmtQtd(it.qtd))} ${esc(it.um)}</span></div>
-        `).join("");
-        const avisoAtraso = g.reagendadoPorAtraso
-          ? `<div style="font-size:10.5px;color:var(--accent-yellow);font-weight:700;margin-bottom:4px;">⚠️ Atrasado desde ${esc(g.data_entrega)} — reagendado (${g.diasAtraso}d)</div>`
-          : "";
-        return `<div style="margin-bottom:10px;">${avisoAtraso}<div style="font-size:11.5px;color:#fff;font-weight:700;margin-bottom:4px;">${esc(g.nome_fornec)} · Pedido ${esc(g.nro_pedido)}</div>${linhasItens}</div>`;
-      }).join("");
-      tooltipHtml = `<div class="tooltip-card" style="max-width:380px;max-height:320px;overflow:auto;"><div class="tooltip-title">Chegando em ${dataLabel} (${pedidos} pedido${pedidos===1?"":"s"})</div>${blocos}</div>`;
-    }
-
-    cardsHtml.push(`
-      <div class="forecast-card ${isRecebimento ? "recebimento" : ""} ${pedidos===0 ? "empty" : ""}">
-        ${isRecebimento ? '<span class="forecast-tag">Dia de recebimento</span>' : ""}
-        <div class="forecast-day">${DIAS_SEMANA[d.getDay()]}</div>
-        <div class="forecast-date">${dataLabel}</div>
-        <div class="forecast-number">${pedidos}</div>
-        <div class="forecast-label">pedido${pedidos===1?"":"s"} · ${itensTotal} ${itensTotal===1?"item":"itens"}</div>
-        ${reagendados.length>0 ? `<div class="forecast-reagendado-tag">⚠️ ${reagendados.length} atrasado${reagendados.length===1?"":"s"} reagendado${reagendados.length===1?"":"s"}</div>` : ""}
-        <div class="forecast-fornecedores ${pedidos>0?"tooltip-trigger":""}">${resumoLabel}${tooltipHtml}</div>
-      </div>`);
-  }
-  els.forecastCards.innerHTML = cardsHtml.join("");
-  forecastTotalCount = totalPedidosPeriodo;
-  forecastItensTotal = totalItensPeriodo;
-}
+const DIAS_PREVISAO = 14; // janela do resumo de chegadas
 
 let selectedGrupos = new Set();
 
@@ -1032,23 +953,40 @@ function renderKpis(){
   const fornecChegando = new Set(chegando.map(r=>r.nome_fornec)).size;
   const reagendadosChegando = chegando.filter(r=>r.reagendadoPorAtraso).length;
 
+  // Dia selecionado: o clicado, ou o primeiro com chegadas
+  let diaSel = els.kpis.dataset.diaSel === undefined || els.kpis.dataset.diaSel === "" ? -1 : Number(els.kpis.dataset.diaSel);
+  if(!(diaSel >= 0 && diaSel < dias.length)) diaSel = Math.max(0, dias.findIndex(x=>filtrar(x.rows).length > 0));
+
   // Mapa de calor: um só tom de verde, mais forte com mais pedidos (0, 1, 2, 3+)
   const HEAT = ["rgba(255,255,255,.05)","#139160","#1FBF7E","#00E479"];
   const HEAT_TXT = ["rgba(191,239,218,.5)","#FFFFFF","#00331F","#00331F"];
-  const LETRA = ["D","S","T","Q","Q","S","S"];
+  const ABREV = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  const ddmm = d => `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
   const celulas = dias.map(x=>{
     const rows = filtrar(x.rows);
     const n = rows.length, c = Math.min(n,3);
-    const dataLabel = `${String(x.d.getDate()).padStart(2,"0")}/${String(x.d.getMonth()+1).padStart(2,"0")}`;
-    const titulo = `${DIAS_SEMANA[x.d.getDay()]} ${dataLabel}${x.recv?" · dia de recebimento":""}`;
-    const linhas = n
-      ? rows.map(r=>`<div class="tooltip-row"><span class="prod">${esc(r.nome_fornec)} · Pedido ${esc(r.nro_pedido)}${r.reagendadoPorAtraso?` <span style="color:#FF9632;">(atrasado ${r.diasAtraso}d)</span>`:""}</span><span class="qty">${plural(r.qtd_itens||0,"item","itens")}</span></div>`).join("")
-      : `<div class="tooltip-row"><span class="prod">Sem chegadas previstas</span></div>`;
-    const tooltip = `<div class="tooltip-card"><div class="tooltip-title">${titulo}${n?` (${plural(n,"pedido","pedidos")})`:""}</div>${linhas}</div>`;
-    return `<div class="rs-dia tooltip-trigger${x.recv?" recv":""}${x.i===0?" hoje":""}"><div class="rs-sq${rows.some(r=>r.reagendadoPorAtraso)?" late":""}" style="background:${HEAT[c]};color:${HEAT_TXT[c]};">${n||"·"}</div><span class="rs-w">${x.i===0?"hoje":LETRA[x.d.getDay()]}</span>${tooltip}</div>`;
+    const fds = x.d.getDay()===0 || x.d.getDay()===6;
+    const resumo = `${DIAS_SEMANA[x.d.getDay()]} ${ddmm(x.d)}: ${n ? plural(n,"pedido","pedidos") : "sem chegadas"}${x.recv?" · dia de recebimento":""}`;
+    return `<button type="button" class="rs-dia${x.recv?" recv":""}${x.i===0?" hoje":""}${fds?" fds":""}" data-dia="${x.i}" aria-pressed="${x.i===diaSel}" title="${esc(resumo)}"><span class="rs-wd">${x.i===0?"Hoje":ABREV[x.d.getDay()]}</span><span class="rs-dt">${ddmm(x.d)}</span><span class="rs-sq${rows.some(r=>r.reagendadoPorAtraso)?" late":""}" style="background:${HEAT[c]};color:${HEAT_TXT[c]};">${n||"·"}</span></button>`;
   }).join("");
   const fim = dias[dias.length-1].d;
-  const periodo = `${String(hoje.getDate()).padStart(2,"0")}/${String(hoje.getMonth()+1).padStart(2,"0")} a ${String(fim.getDate()).padStart(2,"0")}/${String(fim.getMonth()+1).padStart(2,"0")}`;
+  const periodo = `${ddmm(hoje)} a ${ddmm(fim)}`;
+
+  // Detalhe do dia selecionado (substitui os cartões da antiga Previsão de chegada)
+  const sel = dias[diaSel];
+  const rowsSel = filtrar(sel.rows);
+  const MAX_DET = 8;
+  const itensSel = rowsSel.reduce((s,r)=>s+(r.qtd_itens||0),0);
+  const detalhe = `
+    <div class="rs-det-h"><b>${sel.i===0?"Hoje · ":""}${DIAS_SEMANA[sel.d.getDay()]} ${ddmm(sel.d)}</b>${sel.recv?'<span class="rc">Dia de recebimento</span>':""}<span class="q">${rowsSel.length ? `${plural(rowsSel.length,"pedido","pedidos")} · ${plural(itensSel,"item","itens")}` : ""}</span></div>
+    ${rowsSel.length ? `<div class="rs-det-l">${rowsSel.slice(0,MAX_DET).map(r=>`
+      <div class="rs-ped${r.reagendadoPorAtraso?" reag":""}">
+        <span class="f" title="${esc(r.nome_fornec)}">${esc(r.nome_fornec)}</span>
+        <span class="p">Pedido ${esc(r.nro_pedido)}<br>${plural(r.qtd_itens||0,"item","itens")}${r.reagendadoPorAtraso?`<span class="late">atrasado ${r.diasAtraso}d · previsto ${esc(r.data_entrega)}</span>`:""}</span>
+        <span class="i" title="${esc((r.itens||[]).map(it=>it.descricao).join(" · "))}">${esc(resumoItens(r.itens))}</span>
+      </div>`).join("")}</div>${rowsSel.length>MAX_DET?`<div class="mais">e mais ${rowsSel.length-MAX_DET} pedidos neste dia: veja em Próximas entregas.</div>`:""}`
+      : `<div class="vazio">Nenhuma chegada prevista neste dia${grupoSel?" para "+esc(nomeGrupo(grupoSel)):""}. Clique em outro dia no mapa.</div>`}
+  `;
 
   // Grupos em números (sem barra de proporção), na ordem fixa MP, Embalagem, Revenda
   const ORDEM = ["Matéria-Prima","Embalagem","Revenda"];
@@ -1069,20 +1007,23 @@ function renderKpis(){
 
   els.kpis.innerHTML = `
     <div class="rs-card rs-main">
-      <div>
-        <div class="rs-lbl">Chegando em 14 dias${grupoSel?" · "+esc(nomeGrupo(grupoSel)):""}</div>
-        <div class="rs-big">${chegando.length}</div>
-        <div class="rs-sub">${grupoSel?`de ${todasChegando.length} pedidos · `:`${chegando.length===1?"pedido":"pedidos"} · `}${plural(itensChegando,"item","itens")} · ${plural(fornecChegando,"fornecedor","fornecedores")}${reagendadosChegando?` · ${reagendadosChegando} atrasado${reagendadosChegando===1?"":"s"} reagendado${reagendadosChegando===1?"":"s"}`:""}</div>
+      <div class="rs-top">
+        <div>
+          <div class="rs-lbl">Chegando em 14 dias${grupoSel?" · "+esc(nomeGrupo(grupoSel)):""}</div>
+          <div class="rs-big">${chegando.length}</div>
+          <div class="rs-sub">${grupoSel?`de ${todasChegando.length} pedidos · `:`${chegando.length===1?"pedido":"pedidos"} · `}${plural(itensChegando,"item","itens")} · ${plural(fornecChegando,"fornecedor","fornecedores")}${reagendadosChegando?` · ${reagendadosChegando} atrasado${reagendadosChegando===1?"":"s"} reagendado${reagendadosChegando===1?"":"s"}`:""}</div>
+        </div>
+        ${grupos.length ? `<div class="rs-grupos"><div class="rs-lbl">Por grupo<span class="rs-hint">clique para filtrar</span></div><div class="rs-gnum">${blocosGrupo}</div></div>` : ""}
       </div>
-      <div style="min-width:0;">
+      <div>
         <div class="rs-heat-wrap"><div class="rs-heat">${celulas}</div></div>
         <div class="rs-cap">
           <span class="rs-scale">0 ${HEAT.map(c=>`<i style="background:${c};"></i>`).join("")} 3+ pedidos</span>
-          <span><span style="color:var(--accent-yellow);">▬</span> recebimento &nbsp; <span style="color:#FF9632;">●</span> atrasado reagendado</span>
+          <span><span style="color:var(--accent-yellow);">▬</span> recebimento (terças e quintas) &nbsp; <span style="color:#FF9632;">●</span> atrasado reagendado &nbsp; clique num dia para ver os pedidos</span>
           <span>${periodo}</span>
         </div>
       </div>
-      ${grupos.length ? `<div class="rs-grupos"><div class="rs-lbl">Por grupo<span class="rs-hint">clique para filtrar os dias</span></div><div class="rs-gnum">${blocosGrupo}</div></div>` : ""}
+      <div class="rs-det">${detalhe}</div>
     </div>
     <div class="rs-side">
       <div class="rs-card rs-mini"><span class="t">Próximo recebimento</span>${
@@ -1107,10 +1048,13 @@ function renderKpis(){
   if(!els.kpis.dataset.bound){
     els.kpis.dataset.bound = "1";
     els.kpis.addEventListener("click", e=>{
+      const dia = e.target.closest("[data-dia]");
+      if(dia){ els.kpis.dataset.diaSel = dia.getAttribute("data-dia"); renderKpis(); return; }
       const b = e.target.closest("[data-grupo-resumo]");
       if(!b) return;
       const g = b.getAttribute("data-grupo-resumo");
       els.kpis.dataset.grupo = (els.kpis.dataset.grupo === g) ? "" : g;
+      els.kpis.dataset.diaSel = "";
       renderKpis();
     });
   }
@@ -1459,13 +1403,6 @@ function buildStaticViewerHtml(dataJson, acuracia, geradoEm){
     <button class="btn secondary" id="btnImprimirHoje">🖨️ Imprimir entregas de hoje</button>
   </div>
   <div class="resumo" id="kpis" style="margin-bottom:20px;"></div>
-  <div class="forecast-section">
-    <div class="forecast-header">
-      <h2>📦 Previsão de chegada — próximos 14 dias</h2>
-      <p>Recebimento às terças e quintas-feiras</p>
-    </div>
-    <div class="forecast-grid" id="forecastCards"></div>
-  </div>
   <div class="top-list" id="topListPanel">
     <h3>Próximas entregas (mais próximas primeiro)</h3>
     <div class="filters">
@@ -1531,14 +1468,11 @@ let processedRows = [];
 let sortState = {key:null, dir:1};
 let selectedGrupos = new Set();
 let selectedGruposProx = new Set();
-let forecastTotalCount = 0;
-let forecastItensTotal = 0;
 let entregaEfetivaMap = null; // arquivo publicado não tem a planilha; os dados já vêm prontos em cada pedido
 function calcularPendenciasEntregaEfetiva(){} // no-op: o pareamento já foi calculado antes de gerar este arquivo
 const els = {};
-["kpis","forecastCards","tableBody","rowCount","searchBox","grupoChips","filialFilter","prazoFilter","footerInfo","topListBody","modeToggle","searchBoxProx","grupoChipsProx","filialFilterProx","printArea","btnImprimirHoje"].forEach(id => els[id] = document.getElementById(id));
+["kpis","tableBody","rowCount","searchBox","grupoChips","filialFilter","prazoFilter","footerInfo","topListBody","modeToggle","searchBoxProx","grupoChipsProx","filialFilterProx","printArea","btnImprimirHoje"].forEach(id => els[id] = document.getElementById(id));
 function computeAcuraciaStatic(){ return EMBEDDED_ACURACIA; }
-${renderForecast.toString()}
 ${renderAll.toString()}
 ${populateFilterOptions.toString()}
 ${populateTopListFilters.toString()}
