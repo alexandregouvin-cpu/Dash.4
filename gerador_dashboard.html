@@ -105,32 +105,52 @@
   }
   .status-bar.error{background:rgba(200,20,20,.12);border-color:rgba(232,67,79,.4);color:#ffb3b8;}
 
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:20px;}
-  body.mode-tv .kpis{flex:0 0 auto;}
-  .kpi{position:relative;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:0 10px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.06);overflow:hidden;transition:transform .15s ease;}
-  .kpi .hex{position:absolute;top:14px;right:14px;width:26px;height:26px;clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0% 50%);}
-  .kpi.total .hex{background:var(--accent-mint);}
-  .kpi.atraso .hex{background:var(--accent-red-strong);}
-  .kpi.recebimento .hex{background:var(--accent-yellow);}
-  .kpi.fornecedor .hex{background:var(--text-secondary);}
-  .kpi.acuracia .hex{background:#7C4DFF;}
-  .kpi.topfornecedor{border-color:#7C4DFF;}
-  .kpi.topfornecedor .hex{background:#7C4DFF;}
-  .kpi.pendencias{border-color:var(--accent-red-strong);}
-  .kpi.pendencias .hex{background:var(--accent-red-strong);}
-  .kpi.chegando{border-color:var(--accent-mint);box-shadow:0 10px 28px rgba(155,240,195,0.15), inset 0 1px 0 rgba(255,255,255,0.08);}
-  .kpi.chegando .hex{background:var(--accent-mint);}
-  .kpi .label{font-size:11.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
-  .kpi .value{font-family:'Poppins',sans-serif;font-size:30px;font-weight:800;margin-top:6px;color:var(--accent-green);}
-  .kpi .value.muted{font-size:13px;font-weight:600;color:var(--text-secondary) !important;font-family:'Inter',sans-serif;}
-  .kpi .value-unit{font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:var(--text-secondary);margin-left:6px;}
-  .kpi .kpi-sub{font-size:12px;font-weight:500;color:var(--text-secondary);margin-top:8px;line-height:1.4;font-family:'Inter',sans-serif;}
-  .kpi .kpi-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
-  .kpi .kpi-chip{font-size:11px;padding:3px 9px;border-radius:10px;background:rgba(255,255,255,0.08);color:var(--text-secondary);font-weight:700;white-space:nowrap;}
-  body.mode-tv .kpi .value{font-size:40px;}
-  body.mode-tv .kpi .kpi-sub{font-size:16px;}
-  body.mode-tv .kpi .kpi-chip{font-size:14px;padding:4px 11px;}
-  body.mode-tv .kpi .value-unit{font-size:18px;}
+  /* Resumo (opção B validada): número de 14 dias + mapa de calor por dia + grupos clicáveis; 3 cartões de ação ao lado */
+  .resumo{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:12px;}
+  @media (max-width:900px){ .resumo{grid-template-columns:minmax(0,1fr);} }
+  .rs-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);min-width:0;}
+  .rs-main{padding:18px 20px;display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:18px 28px;align-items:end;}
+  @media (max-width:640px){ .rs-main{grid-template-columns:minmax(0,1fr);} }
+  .rs-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);font-weight:600;}
+  .rs-hint{font-size:11.5px;color:var(--text-secondary);opacity:.7;margin-left:8px;text-transform:none;letter-spacing:0;font-weight:500;}
+  .rs-big{font:800 56px/1 'Inter',sans-serif;color:var(--accent-green);margin-top:8px;letter-spacing:-.02em;}
+  .rs-sub{font-size:12.5px;color:var(--text-secondary);margin-top:6px;}
+  .rs-heat-wrap{overflow-x:auto;min-width:0;}
+  .rs-heat{display:grid;grid-template-columns:repeat(14,minmax(24px,1fr));gap:3px;min-width:380px;}
+  .rs-dia{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
+  .rs-sq{position:relative;width:100%;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Inter',sans-serif;}
+  .rs-dia.recv .rs-sq{box-shadow:inset 0 -3px 0 var(--accent-yellow);}
+  .rs-dia.hoje .rs-sq{outline:2px solid var(--text-primary);outline-offset:-2px;}
+  .rs-sq.late::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#FF9632;}
+  .rs-w{font-size:10px;color:var(--text-secondary);opacity:.75;line-height:1;}
+  .rs-dia.recv .rs-w{color:var(--accent-yellow);opacity:1;font-weight:700;}
+  .rs-dia.hoje .rs-w{color:var(--text-primary);opacity:1;font-weight:800;}
+  .rs-cap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:11px;color:var(--text-secondary);opacity:.85;margin-top:6px;}
+  .rs-scale{display:inline-flex;align-items:center;gap:5px;}
+  .rs-scale i{width:16px;height:10px;border-radius:2px;display:inline-block;}
+  .rs-grupos{grid-column:1/-1;display:grid;gap:8px;}
+  .rs-gnum{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;}
+  .rs-gb{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;display:grid;gap:2px;min-width:0;color:var(--text-primary);font-family:'Inter',sans-serif;}
+  .rs-gb:hover{border-color:var(--text-secondary);}
+  .rs-gb[aria-pressed="true"]{border-color:var(--accent-green);background:rgba(0,228,121,.08);}
+  .rs-gb .n{font-size:12px;color:var(--text-secondary);font-weight:600;}
+  .rs-gb .v{font:700 22px/1.1 'Inter',sans-serif;}
+  .rs-gb .v small{font-size:12px;font-weight:600;color:var(--text-secondary);margin-left:5px;}
+  .rs-gb .d{font-size:11.5px;color:var(--text-secondary);opacity:.8;}
+  .rs-side{display:grid;gap:12px;}
+  .rs-mini{padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;}
+  .rs-mini .t{font-weight:600;font-size:13px;}
+  .rs-mini .d{font-size:12px;color:var(--text-secondary);opacity:.85;}
+  .rs-mini .v{font:700 24px/1.1 'Inter',sans-serif;grid-row:span 2;text-align:right;white-space:nowrap;}
+  .rs-mini.crit{border-color:rgba(232,67,79,.5);}
+  .rs-mini.crit .v{color:#ff8a92;}
+  .rs-mini .v.muted{font-size:13px;font-weight:600;color:var(--text-secondary);}
+  .rs-apoio{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12px;color:var(--text-secondary);opacity:.8;margin-top:-4px;}
+  .rs-apoio b{color:var(--text-primary);font-weight:600;}
+  body.mode-tv .resumo{flex:0 0 auto;margin-bottom:20px;}
+  body.mode-tv .rs-big{font-size:72px;}
+  body.mode-tv .rs-sq{height:56px;font-size:18px;}
+  body.mode-tv .rs-mini .v{font-size:30px;}
 
   /* Previsão de chegada — seção principal (previsibilidade) */
   .forecast-section{
@@ -193,10 +213,6 @@
   .tooltip-overlay .tooltip-row .prod{color:#fff;font-weight:600;}
   .tooltip-overlay .tooltip-row .qty{color:var(--accent-mint);white-space:nowrap;font-weight:700;}
 
-  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
-  .charts-row.single{grid-template-columns:1fr;}
-  body.mode-tv .charts-row{flex:1 1 auto;min-height:0;}
-  body.mode-tv .charts-row .chart-wrap{max-height:220px;}
   .chart-panel{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:0 8px 20px var(--shadow);display:flex;flex-direction:column;min-height:0;}
   .chart-panel h3{font-size:13px;margin:0 0 12px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:.04em;}
   .chart-panel .chart-wrap{position:relative;flex:1;min-height:200px;}
@@ -380,7 +396,7 @@
       </div>
     </div>
 
-    <div class="kpis" id="kpis"></div>
+    <div class="resumo" id="kpis" style="margin-bottom:20px;"></div>
 
     <div class="forecast-section">
       <div class="forecast-header">
@@ -390,13 +406,6 @@
       <div class="forecast-grid" id="forecastCards"></div>
     </div>
 
-
-    <div class="charts-row single">
-      <div class="chart-panel">
-        <h3>Pedidos a chegar por grupo (data futura)</h3>
-        <div class="chart-wrap" id="chartGrupo"></div>
-      </div>
-    </div>
 
     <div class="top-list" id="topListPanel">
       <h3>Próximas entregas (mais próximas primeiro)</h3>
@@ -459,7 +468,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v28</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v29</footer>
 
 <script>
 /* =========================================================
@@ -831,7 +840,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v28`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v29`;
 
   renderAll();
 }
@@ -840,7 +849,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
    RENDERIZAÇÃO
    ========================================================= */
 function renderAll(){
-  const etapas = [calcularPendenciasEntregaEfetiva, populateFilterOptions, populateTopListFilters, renderForecast, renderKpis, renderCharts, renderTopList, renderTable];
+  const etapas = [calcularPendenciasEntregaEfetiva, populateFilterOptions, populateTopListFilters, renderForecast, renderKpis, renderTopList, renderTable];
   etapas.forEach(fn=>{
     try{ fn(); }
     catch(err){ console.error(`Falha ao renderizar "${fn.name}":`, err); }
@@ -940,7 +949,7 @@ function computeAcuracia(){
     if(r.entrega_efetiva_raw <= promessa) dentroPromessa++;
   });
   if(comDado === 0) return null;
-  return {pct: Math.round((dentroPromessa/comDado)*100), comDado};
+  return {pct: Math.round((dentroPromessa/comDado)*100), comDado, dentroPromessa};
 }
 
 function proximoRecebimento(){
@@ -974,156 +983,137 @@ function fornecedorComMaisPedidos(){
 }
 
 function renderKpis(){
-  const total = processedRows.length;
-  const fornecedores = new Set(processedRows.map(r=>r.nome_fornec)).size;
+  // Resumo: total chegando em 14 dias + mapa de calor por dia + grupos (clicáveis, filtram o mapa) + 3 cartões de ação.
+  // O grupo selecionado fica em els.kpis.dataset.grupo para funcionar igual na cópia estática.
+  const DIAS_SEMANA = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const grupoSel = els.kpis.dataset.grupo || "";
   const acuracia = computeAcuracia();
-  const chegando14d = forecastTotalCount;
-  const itensChegando = forecastItensTotal;
   const recebimento = proximoRecebimento();
   const topFornecedor = fornecedorComMaisPedidos();
-  const pendenciasCount = processedRows.filter(r=>r.pendente_sem_entrega).length;
 
-  const porGrupoTotal = {};
-  processedRows.forEach(r=>{ const g=r.grupo_item||"—"; porGrupoTotal[g]=(porGrupoTotal[g]||0)+1; });
-  const SIGLAS = {"Matéria - Prima":"MP","Material Embalagem":"Emb","Revenda":"Rev"};
+  function nomeGrupo(g){
+    const n = normalize(g);
+    if(n.includes("MATERIA PRIMA")) return "Matéria-Prima";
+    if(n.includes("EMBALAGEM")) return "Embalagem";
+    if(n.includes("REVENDA")) return "Revenda";
+    return g || "Não informado";
+  }
+  function unidades(rows){
+    let kg = 0, un = 0;
+    rows.forEach(r=>(r.itens||[]).forEach(it=>{
+      const um = normalize(it.um), q = Number(it.qtd) || 0;
+      if(um.startsWith("KG") || um.startsWith("QUILO")) kg += q;
+      else if(um.startsWith("UN")) un += q;
+    }));
+    const partes = [];
+    if(kg) partes.push(fmtQtd(Math.round(kg*100)/100) + " kg");
+    if(un) partes.push(fmtQtd(Math.round(un*100)/100) + " un");
+    return partes.join(" · ");
+  }
+  const plural = (n, um, varios) => `${n} ${n===1?um:varios}`;
 
-  const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
-  const limite14 = new Date(hoje2); limite14.setDate(limite14.getDate()+DIAS_PREVISAO-1);
-  const fornecedoresChegando = new Set(
-    processedRows
-      .filter(r=>{
-        const d = toDate(r.data_entrega_raw);
-        return d && d >= hoje2 && d <= limite14 && statusPrazo(r.data_entrega_raw, r.emissao_raw).key !== "inconsistente";
-      })
-      .map(r=>r.nome_fornec)
-  ).size;
+  // Pedidos que chegam em cada um dos próximos 14 dias (mesma regra da Previsão de chegada)
+  const dias = [];
+  for(let i=0;i<DIAS_PREVISAO;i++){
+    const d = new Date(hoje); d.setDate(d.getDate()+i);
+    const rows = processedRows.filter(g=>{
+      if(g.excluirDeChegada) return false;
+      const gd = toDate(g.dataChegadaExibicao_raw);
+      if(!gd || gd.getTime() !== d.getTime()) return false;
+      return statusPrazo(g.data_entrega_raw, g.emissao_raw).key !== "inconsistente";
+    });
+    dias.push({d, i, rows, recv: d.getDay()===2 || d.getDay()===4});
+  }
+  const todasChegando = dias.flatMap(x=>x.rows);
+  const filtrar = rows => grupoSel ? rows.filter(r=>r.grupo_item===grupoSel) : rows;
+  const chegando = filtrar(todasChegando);
+  const itensChegando = chegando.reduce((s,r)=>s+(r.qtd_itens||0),0);
+  const fornecChegando = new Set(chegando.map(r=>r.nome_fornec)).size;
+  const reagendadosChegando = chegando.filter(r=>r.reagendadoPorAtraso).length;
+
+  // Mapa de calor: um só tom de verde, mais forte com mais pedidos (0, 1, 2, 3+)
+  const HEAT = ["rgba(255,255,255,.05)","#139160","#1FBF7E","#00E479"];
+  const HEAT_TXT = ["rgba(191,239,218,.5)","#FFFFFF","#00331F","#00331F"];
+  const LETRA = ["D","S","T","Q","Q","S","S"];
+  const celulas = dias.map(x=>{
+    const rows = filtrar(x.rows);
+    const n = rows.length, c = Math.min(n,3);
+    const dataLabel = `${String(x.d.getDate()).padStart(2,"0")}/${String(x.d.getMonth()+1).padStart(2,"0")}`;
+    const titulo = `${DIAS_SEMANA[x.d.getDay()]} ${dataLabel}${x.recv?" · dia de recebimento":""}`;
+    const linhas = n
+      ? rows.map(r=>`<div class="tooltip-row"><span class="prod">${esc(r.nome_fornec)} · Pedido ${esc(r.nro_pedido)}${r.reagendadoPorAtraso?` <span style="color:#FF9632;">(atrasado ${r.diasAtraso}d)</span>`:""}</span><span class="qty">${plural(r.qtd_itens||0,"item","itens")}</span></div>`).join("")
+      : `<div class="tooltip-row"><span class="prod">Sem chegadas previstas</span></div>`;
+    const tooltip = `<div class="tooltip-card"><div class="tooltip-title">${titulo}${n?` (${plural(n,"pedido","pedidos")})`:""}</div>${linhas}</div>`;
+    return `<div class="rs-dia tooltip-trigger${x.recv?" recv":""}${x.i===0?" hoje":""}"><div class="rs-sq${rows.some(r=>r.reagendadoPorAtraso)?" late":""}" style="background:${HEAT[c]};color:${HEAT_TXT[c]};">${n||"·"}</div><span class="rs-w">${x.i===0?"hoje":LETRA[x.d.getDay()]}</span>${tooltip}</div>`;
+  }).join("");
+  const fim = dias[dias.length-1].d;
+  const periodo = `${String(hoje.getDate()).padStart(2,"0")}/${String(hoje.getMonth()+1).padStart(2,"0")} a ${String(fim.getDate()).padStart(2,"0")}/${String(fim.getMonth()+1).padStart(2,"0")}`;
+
+  // Grupos em números (sem barra de proporção), na ordem fixa MP, Embalagem, Revenda
+  const ORDEM = ["Matéria-Prima","Embalagem","Revenda"];
+  const grupos = [...new Set(todasChegando.map(r=>r.grupo_item))]
+    .sort((a,b)=>{ const ia = ORDEM.indexOf(nomeGrupo(a)), ib = ORDEM.indexOf(nomeGrupo(b)); return (ia<0?99:ia)-(ib<0?99:ib); });
+  const blocosGrupo = grupos.map(g=>{
+    const rows = todasChegando.filter(r=>r.grupo_item===g);
+    const itens = rows.reduce((s,r)=>s+(r.qtd_itens||0),0);
+    const un = unidades(rows);
+    return `<button type="button" class="rs-gb" data-grupo-resumo="${esc(g)}" aria-pressed="${grupoSel===g}"><span class="n">${esc(nomeGrupo(g))}</span><span class="v">${rows.length}<small>${rows.length===1?"pedido":"pedidos"}</small></span><span class="d">${plural(itens,"item","itens")}${un?" · "+un:""}</span></button>`;
+  }).join("");
+
+  // Cartões de ação
+  const diaReceb = dias.find(x=>x.recv);
+  const pedidosReceb = diaReceb ? diaReceb.rows.length : 0;
+  const pendentes = processedRows.filter(r=>r.pendente_sem_entrega).sort((a,b)=>b.diasAtraso-a.diasAtraso);
+  const maisAntigo = pendentes[0];
 
   els.kpis.innerHTML = `
-    <div class="kpi chegando"><div class="hex"></div><div class="label">Chegando em 14 dias</div><div class="value">${chegando14d}<span class="value-unit">${chegando14d===1?"pedido":"pedidos"}</span></div><div class="kpi-sub">${itensChegando} ${itensChegando===1?"item":"itens"} no total</div></div>
-    <div class="kpi total"><div class="hex"></div><div class="label">Pedidos (CIF filtrado)</div><div class="value">${total}</div><div class="kpi-chips">${Object.keys(porGrupoTotal).map(g=>`<span class="kpi-chip">${porGrupoTotal[g]} ${esc(SIGLAS[g]||g)}</span>`).join("")}</div></div>
-    <div class="kpi fornecedor"><div class="hex"></div><div class="label">Fornecedores únicos</div><div class="value">${fornecedores}</div><div class="kpi-sub">${fornecedoresChegando} com pedido em 14 dias</div></div>
-    <div class="kpi recebimento"><div class="hex"></div><div class="label">Próximo recebimento</div>${
-      recebimento
-        ? `<div class="value" style="font-size:22px;color:var(--text-primary);">${recebimento.label}</div><div class="kpi-sub">${recebimento.quando}</div>`
-        : `<div class="value muted">—</div>`
-    }</div>
-    <div class="kpi topfornecedor"><div class="hex"></div><div class="label">Fornecedor c/ mais pedidos</div>${
-      topFornecedor
-        ? `<div class="value" style="font-size:16px;line-height:1.3;color:var(--text-primary);">${esc(topFornecedor.nome)}</div><div class="kpi-sub">${topFornecedor.pedidos} pedidos</div>`
-        : `<div class="value muted">—</div>`
-    }</div>
-    <div class="kpi pendencias"><div class="hex"></div><div class="label">Atrasados reagendados</div><div class="value">${pendenciasCount}</div><div class="kpi-sub">${pendenciasCount>0?"sem confirmação — veja Previsão/Próximas entregas":"tudo em dia"}</div></div>
-    <div class="kpi acuracia"><div class="hex"></div><div class="label">% Acuracidade entrega</div>${
-      acuracia
-        ? `<div class="value">${acuracia.pct}%</div>`
-        : `<div class="value muted">Aguardando planilha de entrega efetiva</div>`
-    }</div>
-  `;
-}
-
-/* Gráficos desenhados com SVG/HTML puro — sem nenhuma biblioteca externa,
-   para funcionar 100% offline (inclusive nas TVs do mural). */
-function renderDonut(containerEl, segments){
-  const total = segments.reduce((s,x)=>s+x.value,0) || 1;
-  const size=150, radius=56, stroke=26, cx=size/2, cy=size/2;
-  const circumference = 2*Math.PI*radius;
-  let offset=0;
-  const circles = segments.map(seg=>{
-    const frac = seg.value/total;
-    const dash = frac*circumference;
-    const gap = circumference-dash;
-    const el = `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${seg.color}" stroke-width="${stroke}" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"><title>${seg.label}: ${seg.value}</title></circle>`;
-    offset += dash;
-    return el;
-  }).join("");
-  const legend = segments.map(seg=>`
-    <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#fff;margin-top:6px;">
-      <span style="width:10px;height:10px;border-radius:50%;background:${seg.color};display:inline-block;flex:none;"></span>
-      <span>${seg.label}: <strong>${seg.value}</strong></span>
-    </div>`).join("");
-  containerEl.innerHTML = `
-    <div style="display:flex;align-items:center;gap:20px;height:100%;justify-content:center;flex-wrap:wrap;">
-      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${circles}</svg>
-      <div>${legend}</div>
-    </div>`;
-}
-
-function renderBarChart(containerEl, labels, values, color){
-  const max = Math.max(...values, 1);
-  const rows = labels.map((lab,i)=>{
-    const pct = Math.round((values[i]/max)*100);
-    return `
-    <div style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#fff;margin-bottom:5px;">
-        <span>${lab}</span><span style="color:var(--text-secondary);font-weight:700;">${values[i]}</span>
+    <div class="rs-card rs-main">
+      <div>
+        <div class="rs-lbl">Chegando em 14 dias${grupoSel?" · "+esc(nomeGrupo(grupoSel)):""}</div>
+        <div class="rs-big">${chegando.length}</div>
+        <div class="rs-sub">${grupoSel?`de ${todasChegando.length} pedidos · `:`${chegando.length===1?"pedido":"pedidos"} · `}${plural(itensChegando,"item","itens")} · ${plural(fornecChegando,"fornecedor","fornecedores")}${reagendadosChegando?` · ${reagendadosChegando} atrasado${reagendadosChegando===1?"":"s"} reagendado${reagendadosChegando===1?"":"s"}`:""}</div>
       </div>
-      <div style="background:rgba(255,255,255,0.08);border-radius:6px;height:14px;overflow:hidden;">
-        <div style="width:${pct}%;background:${color};height:100%;border-radius:6px;"></div>
+      <div style="min-width:0;">
+        <div class="rs-heat-wrap"><div class="rs-heat">${celulas}</div></div>
+        <div class="rs-cap">
+          <span class="rs-scale">0 ${HEAT.map(c=>`<i style="background:${c};"></i>`).join("")} 3+ pedidos</span>
+          <span><span style="color:var(--accent-yellow);">▬</span> recebimento &nbsp; <span style="color:#FF9632;">●</span> atrasado reagendado</span>
+          <span>${periodo}</span>
+        </div>
       </div>
-    </div>`;
-  }).join("");
-  containerEl.innerHTML = `<div style="width:100%;padding-top:4px;">${rows}</div>`;
-}
-
-function renderCharts(){
-  const hoje = new Date(); hoje.setHours(0,0,0,0);
-
-  // Considera apenas pedidos com data de entrega futura/hoje e confiável (não inconsistente)
-  const futuros = processedRows.filter(r=>{
-    if(r.excluirDeChegada) return false; // já entregue: não é mais "a chegar"
-    const d = toDate(r.data_entrega_raw);
-    if(!d || d < hoje) return false;
-    return statusPrazo(r.data_entrega_raw, r.emissao_raw).key !== "inconsistente";
-  });
-
-  const porGrupo = {};
-  futuros.forEach(r=>{
-    const g = r.grupo_item || "Não informado";
-    if(!porGrupo[g]) porGrupo[g] = {pedidos:0, itens:0, kg:0, unid:0};
-    porGrupo[g].pedidos += 1;
-    porGrupo[g].itens += r.qtd_itens || 0;
-    (r.itens||[]).forEach(it=>{
-      const um = normalize(it.um);
-      const qtd = Number(it.qtd) || 0;
-      if(um.startsWith("KG") || um.startsWith("QUILO")) porGrupo[g].kg += qtd;
-      else if(um.startsWith("UN") || um.startsWith("UNID")) porGrupo[g].unid += qtd;
-    });
-  });
-
-  const grupos = Object.keys(porGrupo).sort((a,b)=>porGrupo[b].pedidos - porGrupo[a].pedidos);
-  const container = document.getElementById("chartGrupo");
-
-  if(grupos.length === 0){
-    container.innerHTML = `<div style="padding:24px 4px;color:var(--text-secondary);font-size:13px;">Nenhum pedido futuro no momento.</div>`;
-    return;
-  }
-
-  const maxPedidos = Math.max(...grupos.map(g=>porGrupo[g].pedidos), 1);
-  const CORES = {"Matéria - Prima":"#9BF0C3","Material Embalagem":"#FAEB0A","Revenda":"#7CC4FF"};
-
-  container.innerHTML = `
-    <div class="grupo-resumo-grid">
-      ${grupos.map(g=>{
-        const d = porGrupo[g];
-        const cor = CORES[g] || "#9BF0C3";
-        const pct = Math.round((d.pedidos/maxPedidos)*100);
-        return `
-        <div class="grupo-card">
-          <div class="grupo-card-header">
-            <span class="grupo-dot" style="background:${cor};"></span>
-            <span class="grupo-nome">${esc(g)}</span>
-          </div>
-          <div class="grupo-bar-track"><div class="grupo-bar-fill" style="width:${pct}%;background:${cor};"></div></div>
-          <div class="grupo-stats">
-            <div class="grupo-stat"><div class="grupo-stat-value">${d.pedidos}</div><div class="grupo-stat-label">Pedidos</div></div>
-            <div class="grupo-stat"><div class="grupo-stat-value">${d.itens}</div><div class="grupo-stat-label">Itens</div></div>
-            <div class="grupo-stat"><div class="grupo-stat-value">${d.kg.toLocaleString("pt-BR")}</div><div class="grupo-stat-label">KG</div></div>
-            <div class="grupo-stat"><div class="grupo-stat-value">${d.unid.toLocaleString("pt-BR")}</div><div class="grupo-stat-label">UNID</div></div>
-          </div>
-        </div>`;
-      }).join("")}
+      ${grupos.length ? `<div class="rs-grupos"><div class="rs-lbl">Por grupo<span class="rs-hint">clique para filtrar os dias</span></div><div class="rs-gnum">${blocosGrupo}</div></div>` : ""}
     </div>
+    <div class="rs-side">
+      <div class="rs-card rs-mini"><span class="t">Próximo recebimento</span>${
+        recebimento
+          ? `<span class="v">${esc(recebimento.label)}</span><span class="d">${esc(recebimento.quando)} · ${plural(pedidosReceb,"pedido","pedidos")}</span>`
+          : `<span class="v muted">—</span><span class="d">sem data nos próximos dias</span>`
+      }</div>
+      <div class="rs-card rs-mini${pendentes.length?" crit":""}"><span class="t">Atrasados reagendados</span><span class="v">${pendentes.length}</span><span class="d">${
+        maisAntigo
+          ? `${esc((maisAntigo.itens&&maisAntigo.itens[0]&&maisAntigo.itens[0].descricao)||maisAntigo.nome_fornec)} · ${plural(maisAntigo.diasAtraso,"dia","dias")}${pendentes.length>1?` (+${pendentes.length-1})`:""}`
+          : "tudo em dia"
+      }</span></div>
+      <div class="rs-card rs-mini"><span class="t">Acuracidade</span>${
+        acuracia
+          ? `<span class="v">${acuracia.pct}%</span><span class="d">${acuracia.dentroPromessa ?? "?"} de ${plural(acuracia.comDado,"entrega","entregas")} no prazo</span>`
+          : `<span class="v muted">—</span><span class="d">aguardando planilha de entrega efetiva</span>`
+      }</div>
+    </div>
+    <div class="rs-apoio"><span><b>${processedRows.length}</b> pedidos CIF no relatório</span>${topFornecedor?`<span>Mais pedidos: <b>${esc(topFornecedor.nome)}</b> (${topFornecedor.pedidos})</span>`:""}</div>
   `;
+
+  if(!els.kpis.dataset.bound){
+    els.kpis.dataset.bound = "1";
+    els.kpis.addEventListener("click", e=>{
+      const b = e.target.closest("[data-grupo-resumo]");
+      if(!b) return;
+      const g = b.getAttribute("data-grupo-resumo");
+      els.kpis.dataset.grupo = (els.kpis.dataset.grupo === g) ? "" : g;
+      renderKpis();
+    });
+  }
 }
 
 let selectedGruposProx = new Set();
@@ -1468,16 +1458,13 @@ function buildStaticViewerHtml(dataJson, acuracia, geradoEm){
   <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
     <button class="btn secondary" id="btnImprimirHoje">🖨️ Imprimir entregas de hoje</button>
   </div>
-  <div class="kpis" id="kpis"></div>
+  <div class="resumo" id="kpis" style="margin-bottom:20px;"></div>
   <div class="forecast-section">
     <div class="forecast-header">
       <h2>📦 Previsão de chegada — próximos 14 dias</h2>
       <p>Recebimento às terças e quintas-feiras</p>
     </div>
     <div class="forecast-grid" id="forecastCards"></div>
-  </div>
-  <div class="charts-row single">
-    <div class="chart-panel"><h3>Pedidos a chegar por grupo (data futura)</h3><div class="chart-wrap" id="chartGrupo"></div></div>
   </div>
   <div class="top-list" id="topListPanel">
     <h3>Próximas entregas (mais próximas primeiro)</h3>
@@ -1558,9 +1545,6 @@ ${populateTopListFilters.toString()}
 ${proximoRecebimento.toString()}
 ${fornecedorComMaisPedidos.toString()}
 ${renderKpis.toString().replace("computeAcuracia()","computeAcuraciaStatic()")}
-${renderDonut.toString()}
-${renderBarChart.toString()}
-${renderCharts.toString()}
 ${renderTopList.toString()}
 ${getUiFilteredRows.toString()}
 ${renderTable.toString()}
