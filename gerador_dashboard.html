@@ -40,7 +40,7 @@
     background-size:100px 174px; pointer-events:none; opacity:.6;
   }
   .brand{display:flex;align-items:center;gap:16px;position:relative;z-index:1;}
-  .brand img{height:64px;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.35));}
+  .brand img{height:84px;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.35));}
   .brand .titles h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.01em;}
   .brand .titles p{margin:2px 0 0;font-size:12px;color:var(--accent-mint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
   .tool-tag{
@@ -59,9 +59,60 @@
     padding:8px 18px;border-radius:24px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;
   }
   .mode-toggle button.active{background:var(--btn-green);color:#fff;}
+  .tv-tools{position:relative;z-index:1;display:flex;align-items:center;gap:12px;}
+  .btn-tela-cheia{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(155,240,195,0.25);background:rgba(255,255,255,0.06);color:var(--text-primary);padding:9px 16px;border-radius:30px;font:600 13px 'Inter',sans-serif;cursor:pointer;}
+  .btn-tela-cheia:hover{border-color:var(--accent-mint);}
+  .btn-tela-cheia svg{width:16px;height:16px;}
+  .tv-clock{display:none;text-align:right;line-height:1.1;}
+  .tv-clock b{display:block;font:800 44px/1 'Inter',sans-serif;letter-spacing:-.01em;font-variant-numeric:tabular-nums;}
+  .tv-clock span{font-size:16px;color:var(--text-secondary);}
 
   main{padding:24px 32px;max-width:1500px;margin:0 auto;}
-  body.mode-tv main{padding:20px 32px;max-width:none;min-height:calc(100vh - 84px);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+  /* Modo TV: desenhado para 1920x1080 (TV de 43"), leitura a distância e sem rolagem.
+     Em telas 4K o JS aplica zoom proporcional (largura/1920). */
+  body.mode-tv{height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+  body.mode-tv header{padding:14px 40px;flex:0 0 auto;}
+  body.mode-tv .brand img{height:104px;}
+  body.mode-tv .brand .titles h1{font-size:28px;}
+  body.mode-tv .brand .titles p{font-size:15px;}
+  body.mode-tv .tool-tag{display:none;}
+  body.mode-tv .tv-clock{display:block;}
+  body.mode-tv main{padding:18px 40px 10px;max-width:none;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  body.mode-tv #dashboardContent:not([style*="none"]){display:flex !important;flex-direction:column;flex:1 1 auto;min-height:0;}
+  body.mode-tv #setupArea,body.mode-tv .tv-hide{display:none !important;}
+  body.mode-tv .rs-side{gap:16px;}
+  body.mode-tv .rs-mini{padding:16px 24px;}
+  body.mode-tv .rs-mini .t{font-size:19px;}
+  body.mode-tv .rs-mini .d{font-size:15px;}
+  body.mode-tv .rs-mini .v{font-size:36px;}
+  body.mode-tv .rs-main{padding:20px 28px;gap:14px;}
+  body.mode-tv .rs-lbl{font-size:15px;}
+  body.mode-tv .rs-hint{display:none;}
+  body.mode-tv .rs-sub{font-size:17px;}
+  body.mode-tv .rs-top{grid-template-columns:minmax(0,340px) minmax(0,1fr);}
+  body.mode-tv .rs-gb{padding:12px 16px;}
+  body.mode-tv .rs-gb .n{font-size:16px;}
+  body.mode-tv .rs-gb .v{font-size:30px;}
+  body.mode-tv .rs-gb .v small{font-size:15px;}
+  body.mode-tv .rs-gb .d{font-size:14px;}
+  body.mode-tv .rs-heat{gap:8px;}
+  body.mode-tv .rs-wd{font-size:16px;}
+  body.mode-tv .rs-dt{font-size:14px;}
+  body.mode-tv .rs-cap{font-size:14px;}
+  body.mode-tv .rs-scale i{width:22px;height:13px;}
+  body.mode-tv .rs-apoio{display:none;}
+  body.mode-tv .rs-itens li{font-size:15px;}
+  body.mode-tv .rs-ped-h .f{font-size:15px;}
+  body.mode-tv .top-list{padding:16px 22px;}
+  body.mode-tv .top-list h3{font-size:17px;}
+  body.mode-tv .top-list .filters{display:none;}
+  body.mode-tv .top-list-header{font-size:14px;}
+  body.mode-tv .top-row{font-size:19px;padding:13px 6px;}
+  body.mode-tv .top-row .item{font-size:16px;}
+  body.mode-tv .top-list-scroll{overflow:hidden;}
+  body.mode-tv .badge{font-size:14px;padding:4px 12px;}
+  body.mode-tv footer{flex:0 0 auto;}
+  body.mode-tv.cursor-oculto, body.mode-tv.cursor-oculto *{cursor:none !important;}
 
   .step{
     background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius);
@@ -171,10 +222,9 @@
   .rs-mini .v.muted{font-size:13px;font-weight:600;color:var(--text-secondary);}
   .rs-apoio{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12px;color:var(--text-secondary);opacity:.8;margin-top:-4px;}
   .rs-apoio b{color:var(--text-primary);font-weight:600;}
-  body.mode-tv .resumo{flex:0 0 auto;margin-bottom:20px;}
-  body.mode-tv .rs-big{font-size:72px;}
-  body.mode-tv .rs-sq{height:84px;font-size:26px;}
-  body.mode-tv .rs-mini .v{font-size:30px;}
+  body.mode-tv .resumo{flex:0 0 auto;margin-bottom:16px !important;gap:16px;}
+  body.mode-tv .rs-big{font-size:96px;}
+  body.mode-tv .rs-sq{height:96px;font-size:34px;border-radius:10px;}
 
   html,body{overflow-x:hidden;}
 
@@ -262,7 +312,7 @@
 
   .empty-state{padding:60px 20px;text-align:center;color:var(--text-secondary);font-size:13px;}
   footer{padding:12px 32px;text-align:center;font-size:11px;color:var(--text-secondary);opacity:.7;}
-  body.mode-tv footer{padding:6px 32px;}
+  body.mode-tv footer{padding:6px 40px;font-size:13px;}
   body.mode-tv .panel{display:none;}
   body.mode-tv .generate-bar{display:none;}
   body.mode-tv .top-list{flex:1 1 auto;}
@@ -329,9 +379,13 @@
     </div>
   </div>
   <span class="tool-tag">Uso interno</span>
-  <div class="mode-toggle" id="modeToggle">
+  <div class="tv-tools">
+    <div class="tv-clock" id="tvClock" aria-live="off"></div>
+    <div class="mode-toggle" id="modeToggle">
     <button data-mode="individual" class="active">Modo Individual</button>
     <button data-mode="tv">Modo TV</button>
+  </div>
+    <button type="button" class="btn-tela-cheia" id="btnTelaCheia" title="Abre o Modo TV em tela cheia (Esc para sair)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg><span>Tela cheia</span></button>
   </div>
 </header>
 
@@ -455,7 +509,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v33</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v34</footer>
 
 <script>
 /* =========================================================
@@ -827,7 +881,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v33`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v34`;
 
   renderAll();
 }
@@ -1251,6 +1305,73 @@ els.modeToggle.querySelectorAll("button").forEach(btn=>{
   });
 });
 
+setupModoTV();
+function setupModoTV(){
+  // Tela cheia + relógio + zoom para 4K + rolagem automática da lista + cursor oculto, só no Modo TV.
+  const body = document.body;
+  const btnFull = document.getElementById("btnTelaCheia");
+  const relogio = document.getElementById("tvClock");
+  const toggle = document.getElementById("modeToggle");
+  const ehTV = () => body.classList.contains("mode-tv");
+  function ativarModo(modo){
+    const b = toggle.querySelector(`[data-mode="${modo}"]`);
+    if(b && !b.classList.contains("active")) b.click();
+  }
+  function telaCheia(){ return document.fullscreenElement || document.webkitFullscreenElement; }
+  function atualizarBotao(){ btnFull.querySelector("span").textContent = telaCheia() ? "Sair da tela cheia" : "Tela cheia"; }
+  btnFull.addEventListener("click", ()=>{
+    if(telaCheia()){
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      return;
+    }
+    ativarModo("tv");
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if(req){ try{ const r = req.call(el); if(r && r.catch) r.catch(()=>{}); }catch(e){ /* navegador bloqueou: segue no Modo TV */ } }
+  });
+  document.addEventListener("fullscreenchange", atualizarBotao);
+  document.addEventListener("webkitfullscreenchange", atualizarBotao);
+  toggle.addEventListener("click", e=>{
+    const b = e.target.closest("[data-mode]");
+    if(b && b.dataset.mode === "individual" && telaCheia()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    setTimeout(ajustarZoom, 0);
+  });
+
+  // Relógio
+  const hora = new Intl.DateTimeFormat("pt-BR", {hour:"2-digit", minute:"2-digit"});
+  const data = new Intl.DateTimeFormat("pt-BR", {weekday:"long", day:"2-digit", month:"long"});
+  function tic(){ const d = new Date(); const dt = data.format(d); relogio.innerHTML = `<b>${hora.format(d)}</b><span>${dt.charAt(0).toUpperCase()+dt.slice(1)}</span>`; }
+  tic(); setInterval(tic, 15000);
+
+  // Layout do Modo TV é feito para 1920 de largura; em telas maiores (4K) amplia proporcionalmente
+  function ajustarZoom(){
+    const z = ehTV() && window.innerWidth >= 2400 ? window.innerWidth / 1920 : 1;
+    body.style.zoom = z === 1 ? "" : String(z);
+  }
+  window.addEventListener("resize", ajustarZoom);
+
+  // Lista "Próximas entregas": rola sozinha quando não cabe na tela
+  const reduzir = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let pausaAte = 0;
+  setInterval(()=>{
+    const lista = document.getElementById("topListBody");
+    if(!lista || !ehTV() || reduzir) return;
+    if(lista.scrollHeight <= lista.clientHeight + 2){ lista.scrollTop = 0; return; }
+    const agora = Date.now();
+    if(agora < pausaAte) return;
+    if(lista.scrollTop + lista.clientHeight >= lista.scrollHeight - 1){ pausaAte = agora + 5000; setTimeout(()=>{ lista.scrollTop = 0; pausaAte = Date.now() + 5000; }, 5000); return; }
+    lista.scrollTop += 1;
+  }, 40);
+
+  // Esconde o cursor parado no Modo TV
+  let timerCursor = null;
+  document.addEventListener("mousemove", ()=>{
+    body.classList.remove("cursor-oculto");
+    clearTimeout(timerCursor);
+    timerCursor = setTimeout(()=>{ if(ehTV()) body.classList.add("cursor-oculto"); }, 3000);
+  });
+}
+
 /* =========================================================
    IMPRESSÃO — ENTREGAS DO DIA (A4)
    ========================================================= */
@@ -1405,13 +1526,17 @@ function buildStaticViewerHtml(dataJson, acuracia, geradoEm){
       <p>Matéria-Prima · Material Embalagem · Revenda</p>
     </div>
   </div>
-  <div class="mode-toggle" id="modeToggle">
+  <div class="tv-tools">
+    <div class="tv-clock" id="tvClock" aria-live="off"></div>
+    <div class="mode-toggle" id="modeToggle">
     <button data-mode="individual" class="active">Modo Individual</button>
     <button data-mode="tv">Modo TV</button>
   </div>
+    <button type="button" class="btn-tela-cheia" id="btnTelaCheia" title="Abre o Modo TV em tela cheia (Esc para sair)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg><span>Tela cheia</span></button>
+  </div>
 </header>
 <main>
-  <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+  <div class="tv-hide" style="display:flex;justify-content:flex-end;margin-bottom:14px;">
     <button class="btn secondary" id="btnImprimirHoje">🖨️ Imprimir entregas de hoje</button>
   </div>
   <div class="resumo" id="kpis" style="margin-bottom:20px;"></div>
@@ -1516,6 +1641,8 @@ els.modeToggle.querySelectorAll("button").forEach(btn=>{
 });
 ${setupTooltipOverlay.toString()}
 setupTooltipOverlay();
+${setupModoTV.toString()}
+setupModoTV();
 ${imprimirEntregasDoDia.toString()}
 els.btnImprimirHoje.addEventListener("click", imprimirEntregasDoDia);
 `;
