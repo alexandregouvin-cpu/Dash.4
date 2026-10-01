@@ -455,7 +455,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v32</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v33</footer>
 
 <script>
 /* =========================================================
@@ -827,7 +827,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v32`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v33`;
 
   renderAll();
 }
@@ -959,8 +959,9 @@ function renderKpis(){
   const reagendadosChegando = chegando.filter(r=>r.reagendadoPorAtraso).length;
 
   // Dia selecionado: o clicado, ou o primeiro com chegadas
+  // Dia aberto: nenhum por padrão. Clicar num dia abre a lista; clicar de novo no mesmo dia fecha.
   let diaSel = els.kpis.dataset.diaSel === undefined || els.kpis.dataset.diaSel === "" ? -1 : Number(els.kpis.dataset.diaSel);
-  if(!(diaSel >= 0 && diaSel < dias.length)) diaSel = Math.max(0, dias.findIndex(x=>filtrar(x.rows).length > 0));
+  if(!(diaSel >= 0 && diaSel < dias.length)) diaSel = -1;
 
   // Mapa de calor: um só tom de verde, mais forte com mais pedidos (0, 1, 2, 3+)
   const HEAT = ["rgba(255,255,255,.05)","#139160","#1FBF7E","#00E479"];
@@ -978,10 +979,10 @@ function renderKpis(){
   const periodo = `${ddmm(hoje)} a ${ddmm(fim)}`;
 
   // Detalhe do dia selecionado (substitui os cartões da antiga Previsão de chegada)
-  const sel = dias[diaSel];
-  const rowsSel = filtrar(sel.rows);
+  const sel = diaSel >= 0 ? dias[diaSel] : null;
+  const rowsSel = sel ? filtrar(sel.rows) : [];
   const itensSel = rowsSel.reduce((s,r)=>s+(r.qtd_itens||0),0);
-  const detalhe = `
+  const detalhe = !sel ? "" : `
     <div class="rs-det-h"><b>${sel.i===0?"Hoje · ":""}${DIAS_SEMANA[sel.d.getDay()]} ${ddmm(sel.d)}</b>${sel.recv?'<span class="rc">Dia de recebimento</span>':""}<span class="q">${rowsSel.length ? `${plural(rowsSel.length,"pedido","pedidos")} · ${plural(itensSel,"item","itens")}` : ""}</span></div>
     ${rowsSel.length ? `<div class="rs-det-l">${rowsSel.map(r=>`
       <div class="rs-ped${r.reagendadoPorAtraso?" reag":""}">
@@ -992,7 +993,7 @@ function renderKpis(){
         </div>
         <ul class="rs-itens">${(r.itens||[]).map(it=>`<li><span class="d">${esc(it.descricao)}</span><span class="q">${esc(fmtQtd(it.qtd))} ${esc(it.um)}</span></li>`).join("")}</ul>
       </div>`).join("")}</div>`
-      : `<div class="vazio">Nenhuma chegada prevista neste dia${grupoSel?" para "+esc(nomeGrupo(grupoSel)):""}. Clique em outro dia no mapa.</div>`}
+      : `<div class="vazio">Nenhuma chegada prevista neste dia${grupoSel?" para "+esc(nomeGrupo(grupoSel)):""}.</div>`}
   `;
 
   // Grupos em números (sem barra de proporção), na ordem fixa MP, Embalagem, Revenda
@@ -1043,11 +1044,11 @@ function renderKpis(){
         <div class="rs-heat-wrap"><div class="rs-heat">${celulas}</div></div>
         <div class="rs-cap">
           <span class="rs-scale">0 ${HEAT.map(c=>`<i style="background:${c};"></i>`).join("")} 3+ pedidos</span>
-          <span><span style="color:var(--accent-yellow);">▬</span> recebimento (terças e quintas) &nbsp; <span style="color:#FF9632;">●</span> atrasado reagendado &nbsp; clique num dia para ver os itens que chegam</span>
+          <span><span style="color:var(--accent-yellow);">▬</span> recebimento (terças e quintas) &nbsp; <span style="color:#FF9632;">●</span> atrasado reagendado &nbsp; clique num dia para ver os itens; clique de novo para fechar</span>
           <span>${periodo}</span>
         </div>
       </div>
-      <div class="rs-det">${detalhe}</div>
+      ${sel ? `<div class="rs-det">${detalhe}</div>` : ""}
     </div>
     <div class="rs-apoio"><span><b>${processedRows.length}</b> pedidos CIF no relatório</span>${topFornecedor?`<span>Mais pedidos: <b>${esc(topFornecedor.nome)}</b> (${topFornecedor.pedidos})</span>`:""}</div>
   `;
@@ -1056,12 +1057,16 @@ function renderKpis(){
     els.kpis.dataset.bound = "1";
     els.kpis.addEventListener("click", e=>{
       const dia = e.target.closest("[data-dia]");
-      if(dia){ els.kpis.dataset.diaSel = dia.getAttribute("data-dia"); renderKpis(); return; }
+      if(dia){
+        const i = dia.getAttribute("data-dia");
+        els.kpis.dataset.diaSel = (els.kpis.dataset.diaSel === i) ? "" : i; // mesmo dia de novo: fecha a lista
+        renderKpis();
+        return;
+      }
       const b = e.target.closest("[data-grupo-resumo]");
       if(!b) return;
       const g = b.getAttribute("data-grupo-resumo");
       els.kpis.dataset.grupo = (els.kpis.dataset.grupo === g) ? "" : g;
-      els.kpis.dataset.diaSel = "";
       renderKpis();
     });
   }
