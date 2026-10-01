@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS = {
   reminderEnabled: false,
   reminderTime: '21:00',
   budgetAlerts: true,
+  autoPlace: false,
   lastReminderDate: '',
 };
 

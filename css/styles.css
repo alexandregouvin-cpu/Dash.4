@@ -192,6 +192,7 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px; }
   width: 100%; max-width: 640px; max-height: 92dvh; margin: auto auto 0; padding: 0;
   border: 0; border-radius: 24px 24px 0 0; background: var(--surface); color: var(--text);
 }
+.sheet { overflow-x: hidden; }
 .sheet::backdrop { background: rgb(0 0 0 / 0.45); }
 .sheet[open] { animation: slide-up 0.2s ease-out; }
 @keyframes slide-up { from { transform: translateY(40px); opacity: 0; } }
@@ -226,3 +227,29 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px; }
   padding: 12px 16px; border-radius: 12px; background: #0f172a; color: #f8fafc; box-shadow: var(--shadow); font-size: 0.9rem;
 }
 .toast button { border: 0; background: none; color: #5eead4; font-weight: 700; cursor: pointer; padding: 0; }
+
+.place-field { margin-top: 12px; }
+.place-field > label { margin-top: 0; }
+.place-row { display: flex; gap: 8px; align-items: flex-end; }
+.place-row input {
+  flex: 1; min-width: 0; padding: 12px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 1rem;
+}
+.place-row .icon-btn { flex: none; width: 48px; height: 48px; border-radius: 12px; box-shadow: none; background: var(--surface-2); }
+.place-row .icon-btn:disabled { opacity: 0.5; }
+.suggest-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 10px 0 6px; }
+.suggestions { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.suggestion {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--bg); text-align: left; cursor: pointer;
+}
+.suggestion > span:first-child { font-size: 1.2rem; }
+.suggestion .info { flex: 1; min-width: 0; }
+.suggestion strong, .suggestion small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggestion small { color: var(--muted); font-size: 0.8rem; }
+.osm-credit { font-size: 0.7rem; color: var(--muted); margin: 6px 0 0; }
+.osm-credit a { color: inherit; }
+
+/* Mantém os rádios invisíveis dentro do seu chip/cartão (senão alargam o formulário). */
+.cat-grid, .chips label { position: relative; }
+.cat-grid input, .chips input { width: 1px; height: 1px; margin: 0; top: 0; left: 0; }

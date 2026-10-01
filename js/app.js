@@ -3,12 +3,14 @@ import {
   todayISO, addDays, monthKey, shiftMonth, formatMonthLabel, formatDayLabel, parseISODate,
   sumCents, filterByDay, filterByMonth, sortExpenses, groupByDay, totalsByCategory, lastNDaysTotals,
   dailyAverage, monthProjection, budgetStatus, crossedThresholds, validateExpense, newId, toCSV, parseBackup,
+  nearbyHistoryPlaces, totalsByPlace, normalizePlace, formatDistance,
 } from './core.js';
 import { load, save } from './storage.js';
 import * as notifications from './notifications.js';
+import * as places from './places.js';
 
 const state = load();
-const ui = { view: 'today', month: monthKey(todayISO()), historyCategory: '', editingId: null };
+const ui = { view: 'today', month: monthKey(todayISO()), historyCategory: '', editingId: null, place: null, position: null, autoCategory: false };
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -25,10 +27,16 @@ function persist() {
 function itemHTML(e, { showDate = false } = {}) {
   const cat = getCategory(e.category);
   const pay = getPaymentMethod(e.payment);
-  const meta = [showDate ? formatDayLabel(e.date) : null, pay?.label].filter(Boolean).join(' · ');
+  const title = e.note || e.place?.name || cat.label;
+  const meta = [
+    title !== cat.label ? cat.label : null,
+    e.place?.name && e.place.name !== title ? `📍 ${e.place.name}` : null,
+    showDate ? formatDayLabel(e.date) : null,
+    pay?.label,
+  ].filter(Boolean).join(' · ');
   return `<li><button class="item" data-edit="${escapeHTML(e.id)}">
     <span class="dot" style="background:${cat.color}22">${cat.emoji}</span>
-    <span class="info"><strong>${escapeHTML(e.note || cat.label)}</strong><small>${escapeHTML(e.note ? [cat.label, meta].filter(Boolean).join(' · ') : meta || ' ')}</small></span>
+    <span class="info"><strong>${escapeHTML(title)}</strong><small>${escapeHTML(meta) || '&nbsp;'}</small></span>
     <span class="value">${formatBRL(e.amount)}</span>
   </button></li>`;
 }
@@ -121,6 +129,13 @@ function renderSummary() {
       </li>`).join('')
     : '<li class="empty">Sem gastos para mostrar.</li>';
 
+  const topPlaces = totalsByPlace(month).slice(0, 5);
+  $('#sum-places-card').hidden = !topPlaces.length;
+  $('#sum-places').innerHTML = topPlaces.map((pl) => `<li>
+      <div class="bar-head"><span>📍 ${escapeHTML(pl.name)} <small class="muted">(${pl.count}x)</small></span><span>${formatBRL(pl.total)}</span></div>
+      <div class="meter"><div style="width:${((pl.total / topPlaces[0].total) * 100).toFixed(1)}%;background:var(--primary)"></div></div>
+    </li>`).join('');
+
   const end = isCurrent ? today : addDays(`${shiftMonth(ui.month, 1)}-01`, -1);
   const week = lastNDaysTotals(state.expenses, end, 7);
   const max = Math.max(...week.map((d) => d.total), 1);
@@ -138,6 +153,7 @@ function renderSettings() {
   form.monthlyBudget.value = s.monthlyBudget ? formatBRL(s.monthlyBudget).replace('R$ ', '') : '';
   form.dailyLimit.value = s.dailyLimit ? formatBRL(s.dailyLimit).replace('R$ ', '') : '';
   form.budgetAlerts.checked = s.budgetAlerts;
+  form.autoPlace.checked = s.autoPlace;
   form.reminderEnabled.checked = s.reminderEnabled;
   form.reminderTime.value = s.reminderTime;
   renderNotifStatus();
@@ -218,8 +234,11 @@ function openExpense({ id = null, category = '' } = {}) {
   if (cat) cat.checked = true;
   const pay = form.querySelector(`input[name="payment"][value="${data.payment}"]`);
   if (pay) pay.checked = true;
+  resetPlace(existing?.place ?? null);
+  ui.autoCategory = !data.category;
 
   dialog.showModal();
+  if (!existing && state.settings.autoPlace) suggestFromHistory();
   // Foco no valor para o teclado numérico já abrir.
   requestAnimationFrame(() => {
     form.amount.focus();
@@ -289,6 +308,9 @@ form.addEventListener('submit', (event) => {
     payment: form.querySelector('input[name="payment"]:checked')?.value ?? '',
     createdAt: existing?.createdAt ?? Date.now(),
   };
+  const place = currentPlace();
+  if (place) expense.place = place;
+  else if (existing) delete existing.place;
   const errors = validateExpense(expense);
   for (const el of $$('[data-error]')) el.textContent = errors[el.dataset.error] ?? '';
   if (Object.keys(errors).length) return;
@@ -321,6 +343,135 @@ $('#delete-expense').addEventListener('click', () => {
 dialog.addEventListener('click', (event) => {
   if (event.target === dialog || event.target.closest('[data-close]')) closeExpense();
 });
+
+// ---------- Local do gasto ----------
+
+let placeRequest = 0; // descarta respostas de buscas antigas
+let suggestions = { history: [], osm: [] };
+
+function placeStatus(text) {
+  const el = $('#place-status');
+  el.textContent = text ?? '';
+  el.hidden = !text;
+}
+
+function resetPlace(place) {
+  placeRequest++;
+  ui.place = place;
+  ui.position = null;
+  suggestions = { history: [], osm: [] };
+  form.placeName.value = place?.name ?? '';
+  placeStatus('');
+  $('#place-suggestions').hidden = true;
+  $('#place-suggestions').innerHTML = '';
+  $('#locate').disabled = !places.isSupported();
+}
+
+// O nome pode ter sido digitado ou editado: mantém as coordenadas conhecidas daquele momento.
+function currentPlace() {
+  const name = form.placeName.value.trim();
+  if (!name) return null;
+  const coords = ui.place?.lat != null ? ui.place : ui.position;
+  return normalizePlace({ name, lat: coords?.lat, lon: coords?.lon, address: ui.place?.name === name ? ui.place.address : '' });
+}
+
+function suggestionHTML(p, index, source) {
+  const cat = p.category ? getCategory(p.category) : null;
+  const details = [
+    cat?.label,
+    formatDistance(p.distance),
+    source === 'history' ? `${p.count}x aqui` : p.address,
+  ].filter(Boolean).join(' · ');
+  return `<li><button type="button" class="suggestion" data-place="${source}:${index}">
+    <span>${cat?.emoji ?? '📍'}</span>
+    <span class="info"><strong>${escapeHTML(p.name)}</strong><small>${escapeHTML(details)}</small></span>
+  </button></li>`;
+}
+
+function renderSuggestions() {
+  const { history, osm } = suggestions;
+  const box = $('#place-suggestions');
+  let html = '';
+  if (history.length) {
+    html += `<p class="suggest-title">Já usados aqui</p><ul class="suggestions">${history.map((p, i) => suggestionHTML(p, i, 'history')).join('')}</ul>`;
+  }
+  if (osm.length) {
+    html += `<p class="suggest-title">Por perto</p><ul class="suggestions">${osm.map((p, i) => suggestionHTML(p, i, 'osm')).join('')}</ul>
+      <p class="osm-credit">Dados © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores do OpenStreetMap</a></p>`;
+  }
+  box.innerHTML = html;
+  box.hidden = !html;
+}
+
+function selectPlace(source, index) {
+  const p = suggestions[source]?.[index];
+  if (!p) return;
+  ui.place = { name: p.name, lat: p.lat, lon: p.lon, address: p.address };
+  form.placeName.value = p.name;
+  // Sugere a categoria só se o usuário ainda não escolheu uma manualmente.
+  const checked = form.querySelector('input[name="category"]:checked');
+  if (p.category && (!checked || ui.autoCategory)) {
+    form.querySelector(`input[name="category"][value="${p.category}"]`).checked = true;
+    ui.autoCategory = true;
+    $('[data-error="category"]').textContent = '';
+  }
+  if (source === 'history' && p.note && !form.note.value.trim()) form.note.value = p.note;
+  $('#place-suggestions').hidden = true;
+  placeStatus('');
+}
+
+async function locate({ searchOSM }) {
+  const request = ++placeRequest;
+  const stale = () => request !== placeRequest || !dialog.open;
+  $('#locate').disabled = true;
+  suggestions = { history: [], osm: [] };
+  renderSuggestions();
+  placeStatus('Obtendo sua localização…');
+  try {
+    const position = await places.getPosition();
+    if (stale()) return;
+    ui.position = position;
+    suggestions.history = nearbyHistoryPlaces(state.expenses, position).slice(0, 3);
+    renderSuggestions();
+    const imprecise = position.accuracy > 300 ? `Localização imprecisa (±${formatDistance(position.accuracy)}).` : '';
+    if (!searchOSM) {
+      placeStatus(suggestions.history.length ? imprecise : '');
+      return;
+    }
+    placeStatus(`Buscando lugares por perto… ${imprecise}`);
+    const known = new Set(suggestions.history.map((p) => p.name.toLowerCase()));
+    const found = await places.searchNearby(position);
+    if (stale()) return;
+    suggestions.osm = found.filter((p) => !known.has(p.name.toLowerCase())).slice(0, 8);
+    renderSuggestions();
+    placeStatus(suggestions.history.length || suggestions.osm.length
+      ? imprecise
+      : 'Nenhum estabelecimento encontrado aqui. Digite o nome do local — a posição será salva junto.');
+  } catch (err) {
+    if (!stale()) placeStatus(err.message);
+  } finally {
+    if (request === placeRequest) $('#locate').disabled = false;
+  }
+}
+
+// Com a opção ligada: sugere lugares do histórico sem usar a internet.
+async function suggestFromHistory() {
+  try {
+    const perm = await navigator.permissions?.query({ name: 'geolocation' });
+    if (perm && perm.state !== 'granted') return; // não abre pedido de permissão sozinho
+  } catch { /* navegador sem Permissions API: segue */ }
+  locate({ searchOSM: false });
+}
+
+$('#locate').addEventListener('click', () => locate({ searchOSM: true }));
+$('#place-suggestions').addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-place]');
+  if (!btn) return;
+  const [source, index] = btn.dataset.place.split(':');
+  selectPlace(source, Number(index));
+});
+// Escolher a categoria manualmente impede que uma sugestão de lugar a substitua.
+$('#category-grid').addEventListener('change', () => { ui.autoCategory = false; });
 
 // ---------- Toast ----------
 
@@ -366,6 +517,11 @@ settingsForm.addEventListener('change', async (event) => {
       return;
     }
     s[name] = cents;
+  }
+  if (name === 'autoPlace') {
+    s.autoPlace = event.target.checked;
+    // Pede a permissão agora, para a sugestão automática funcionar depois.
+    if (s.autoPlace) places.getPosition().catch((err) => toast(err.message));
   }
   if (name === 'budgetAlerts' || name === 'reminderEnabled') {
     s[name] = event.target.checked;

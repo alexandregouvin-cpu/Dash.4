@@ -232,11 +232,12 @@ const csvCell = (v) => {
 
 // CSV com ";" e vírgula decimal, que o Excel/Planilhas em português abrem direto.
 export function toCSV(expenses) {
-  const header = ['Data', 'Categoria', 'Descrição', 'Pagamento', 'Valor'];
+  const header = ['Data', 'Categoria', 'Descrição', 'Local', 'Pagamento', 'Valor'];
   const rows = sortExpenses(expenses).map((e) => [
     e.date.split('-').reverse().join('/'),
     getCategory(e.category).label,
     e.note ?? '',
+    e.place?.name ?? '',
     getPaymentMethod(e.payment)?.label ?? '',
     (e.amount / 100).toFixed(2).replace('.', ','),
   ]);
@@ -257,7 +258,127 @@ export function parseBackup(text) {
       payment: e.payment ? String(e.payment) : '',
       date: String(e.date ?? ''),
       createdAt: Number(e.createdAt) || Date.now(),
+      ...(normalizePlace(e.place) ? { place: normalizePlace(e.place) } : {}),
     }))
     .filter((e) => Object.keys(validateExpense(e)).length === 0);
   return { expenses, settings: data?.settings && typeof data.settings === 'object' ? data.settings : null };
+}
+
+// ---------- Localização ----------
+
+// Distância em metros entre dois pontos { lat, lon } (fórmula de haversine).
+export function distanceMeters(a, b) {
+  const R = 6371000;
+  const rad = (d) => (d * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLon = rad(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+export function formatDistance(m) {
+  return m < 1000 ? `${Math.round(m / 10) * 10 || 5} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`;
+}
+
+// Tipo de estabelecimento do OpenStreetMap → categoria do app (null quando não dá para saber).
+const OSM_CATEGORY_RULES = [
+  ['combustivel', { amenity: ['fuel', 'charging_station'], shop: ['gas'] }],
+  ['mercado', { shop: ['supermarket', 'convenience', 'greengrocer', 'butcher', 'grocery', 'wholesale', 'general', 'frozen_food', 'seafood', 'farm'] }],
+  ['alimentacao', {
+    amenity: ['restaurant', 'fast_food', 'cafe', 'bar', 'pub', 'food_court', 'ice_cream', 'biergarten'],
+    shop: ['bakery', 'pastry', 'confectionery', 'deli', 'coffee', 'beverages'],
+  }],
+  ['saude', {
+    amenity: ['pharmacy', 'hospital', 'clinic', 'doctors', 'dentist', 'veterinary'],
+    shop: ['chemist', 'optician', 'medical_supply'],
+    healthcare: '*',
+  }],
+  ['transporte', {
+    amenity: ['bus_station', 'taxi', 'parking', 'car_rental', 'ferry_terminal', 'car_wash', 'bicycle_rental'],
+    shop: ['car_repair', 'tyres', 'car_parts'],
+    public_transport: '*',
+    railway: ['station', 'subway_entrance'],
+  }],
+  ['casa', { shop: ['hardware', 'doityourself', 'furniture', 'houseware', 'appliance', 'electrical', 'paint', 'garden_centre', 'bed', 'kitchen', 'laundry', 'dry_cleaning'] }],
+  ['lazer', { amenity: ['cinema', 'theatre', 'nightclub', 'arts_centre'], leisure: '*', tourism: '*' }],
+];
+
+export function categoryFromOSMTags(tags = {}) {
+  for (const [category, rules] of OSM_CATEGORY_RULES) {
+    for (const [key, values] of Object.entries(rules)) {
+      if (tags[key] && (values === '*' || values.includes(tags[key]))) return category;
+    }
+  }
+  return null;
+}
+
+// Converte a resposta do Overpass em lugares [{ name, lat, lon, address, category, distance }].
+export function parseOverpassPlaces(json, origin) {
+  const seen = new Set();
+  return (json?.elements ?? [])
+    .map((el) => {
+      const lat = el.lat ?? el.center?.lat;
+      const lon = el.lon ?? el.center?.lon;
+      const tags = el.tags ?? {};
+      if (!tags.name || lat == null || lon == null) return null;
+      const address = [tags['addr:street'], tags['addr:housenumber']].filter(Boolean).join(', ');
+      return { name: tags.name, lat, lon, address, category: categoryFromOSMTags(tags), distance: distanceMeters(origin, { lat, lon }) };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.distance - b.distance)
+    .filter((p) => {
+      const key = p.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+// Lugares onde você já registrou gastos perto de `origin`, com a categoria e descrição mais usadas ali.
+export function nearbyHistoryPlaces(expenses, origin, radius = 150) {
+  const groups = new Map();
+  for (const e of sortExpenses(expenses)) {
+    if (!e.place?.name || e.place.lat == null) continue;
+    const distance = distanceMeters(origin, e.place);
+    if (distance > radius) continue;
+    const key = e.place.name.toLowerCase();
+    const g = groups.get(key) ?? { place: e.place, distance, count: 0, categories: new Map(), note: e.note || '' };
+    g.count += 1;
+    g.distance = Math.min(g.distance, distance);
+    g.categories.set(e.category, (g.categories.get(e.category) ?? 0) + 1);
+    groups.set(key, g);
+  }
+  return [...groups.values()]
+    .map((g) => ({
+      ...g.place,
+      distance: g.distance,
+      count: g.count,
+      note: g.note,
+      category: [...g.categories].sort((a, b) => b[1] - a[1])[0][0],
+    }))
+    .sort((a, b) => b.count - a.count || a.distance - b.distance);
+}
+
+// Ranking de lugares por total gasto: [{ name, total, count }]
+export function totalsByPlace(expenses) {
+  const totals = new Map();
+  for (const e of expenses) {
+    if (!e.place?.name) continue;
+    const key = e.place.name.toLowerCase();
+    const t = totals.get(key) ?? { name: e.place.name, total: 0, count: 0 };
+    t.total += e.amount;
+    t.count += 1;
+    totals.set(key, t);
+  }
+  return [...totals.values()].sort((a, b) => b.total - a.total);
+}
+
+export function normalizePlace(p) {
+  if (!p || typeof p !== 'object') return null;
+  const name = String(p.name ?? '').trim().slice(0, 80);
+  if (!name) return null;
+  const lat = Number(p.lat);
+  const lon = Number(p.lon);
+  const hasCoords = p.lat != null && p.lon != null && Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+  return { name, ...(hasCoords ? { lat, lon } : {}), ...(p.address ? { address: String(p.address).slice(0, 120) } : {}) };
 }

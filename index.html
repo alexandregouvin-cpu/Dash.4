@@ -77,6 +77,10 @@
         <h2 class="card-title">Últimos 7 dias</h2>
         <div id="sum-week" class="week"></div>
       </div>
+      <div class="card" id="sum-places-card" hidden>
+        <h2 class="card-title">Onde mais gasto</h2>
+        <ul id="sum-places" class="bars"></ul>
+      </div>
     </section>
 
     <!-- AJUSTES -->
@@ -90,6 +94,10 @@
           <input name="dailyLimit" inputmode="decimal" placeholder="Ex.: 100,00" autocomplete="off">
         </label>
         <label class="switch"><input type="checkbox" name="budgetAlerts"> Avisar ao atingir 80% e 100%</label>
+
+        <h2 class="card-title">Localização</h2>
+        <label class="switch"><input type="checkbox" name="autoPlace"> Sugerir o local ao abrir um novo gasto</label>
+        <p class="hint">Usa só o seu histórico, sem internet. A busca de estabelecimentos no OpenStreetMap acontece apenas quando você toca em 📍, e só então sua posição é enviada ao serviço de mapas.</p>
 
         <h2 class="card-title">Notificações</h2>
         <label class="switch"><input type="checkbox" name="reminderEnabled"> Lembrete diário para registrar gastos</label>
@@ -144,6 +152,16 @@
       <label>Descrição (opcional)
         <input name="note" maxlength="120" placeholder="Ex.: almoço, posto, Uber…" autocomplete="off">
       </label>
+
+      <div class="place-field">
+        <label for="place-name">Local (opcional)</label>
+        <div class="place-row">
+          <input id="place-name" name="placeName" maxlength="80" placeholder="Ex.: Posto Shell" autocomplete="off">
+          <button type="button" id="locate" class="icon-btn" aria-label="Buscar lugares perto de mim" title="Buscar lugares perto de mim">📍</button>
+        </div>
+        <p id="place-status" class="hint" hidden></p>
+        <div id="place-suggestions" hidden></div>
+      </div>
 
       <div class="row">
         <label>Data

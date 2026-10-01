@@ -12,13 +12,33 @@ sem passar por loja. Funciona offline e os dados ficam só no seu aparelho.
 - **Registro rápido**: toque na categoria, digite o valor (teclado numérico, estilo caixa registradora:
   `8550` → R$ 85,50) e salve. Descrição, data e forma de pagamento (Pix, débito, crédito, dinheiro) são opcionais.
 - **Categorias**: Alimentação, Mercado, Combustível, Transporte, Saúde, Casa e contas, Lazer, Imprevistos, Outros.
+- **Local do gasto** 📍: toque no alfinete para ver os estabelecimentos ao seu redor e escolher onde está.
+  Veja detalhes em [Localização](#localização).
 - **Hoje**: total do dia, do mês, média diária e barra de progresso do orçamento.
 - **Histórico**: gastos agrupados por dia, navegação por mês e filtro por categoria. Toque num item para editar ou excluir (com “Desfazer”).
-- **Resumo**: total, média por dia, projeção para o fim do mês, gráfico por categoria e dos últimos 7 dias.
+- **Resumo**: total, média por dia, projeção para o fim do mês, gráfico por categoria, dos últimos 7 dias e “Onde mais gasto”.
 - **Notificações**:
   - lembrete diário no horário que você escolher, só se você ainda não registrou nada no dia;
   - alerta ao atingir 80% e 100% do orçamento mensal e ao passar do limite diário.
 - **Dados**: exportar planilha CSV (abre no Excel/Google Planilhas), backup e restauração em JSON.
+
+## Localização
+
+No formulário de gasto, o botão **📍** usa o GPS do celular e mostra:
+
+1. **Já usados aqui**: lugares onde você já registrou gastos num raio de ~150 m. Vêm do seu histórico,
+   sem internet, com a categoria e a descrição que você costuma usar ali.
+2. **Por perto**: estabelecimentos do [OpenStreetMap](https://www.openstreetmap.org) (API Overpass, grátis e sem cadastro).
+
+Ao escolher um lugar, o app **sugere a categoria** pelo tipo de estabelecimento (posto → Combustível,
+supermercado → Mercado, restaurante/padaria → Alimentação, farmácia → Saúde…). Se você já escolheu a categoria, ela é mantida.
+Também dá para digitar o nome do local à mão; se a posição foi obtida, ela é salva junto.
+
+Em **Ajustes → Localização** você pode ligar a sugestão automática ao abrir um novo gasto. Ela usa só o histórico.
+
+Privacidade: sua posição só é enviada ao serviço de mapas quando você toca em 📍. A cobertura do OpenStreetMap
+é boa em cidades grandes, mas pode faltar estabelecimento em lugares menores. Nesse caso, digite o nome.
+Depois disso, o lugar passa a aparecer pelo histórico.
 
 ## Como instalar no celular
 
@@ -59,6 +79,7 @@ npm test    # testes da lógica (node --test)
 | `js/core.js` | Lógica pura: valores, datas, totais, orçamento, CSV (testada em `tests/`) |
 | `js/storage.js` | Salvamento local (localStorage) |
 | `js/notifications.js` | Permissão, lembrete diário e alertas |
+| `js/places.js` | GPS do aparelho e busca de estabelecimentos no OpenStreetMap |
 | `sw.js` | Service worker: offline, lembrete em segundo plano, clique na notificação |
 | `manifest.webmanifest`, `icons/` | Instalação como app |
 

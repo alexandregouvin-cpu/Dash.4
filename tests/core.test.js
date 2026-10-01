@@ -4,6 +4,7 @@ import {
   formatBRL, digitsToCents, parseAmount, addDays, shiftMonth, daysInMonth, groupByDay, totalsByCategory,
   lastNDaysTotals, dailyAverage, monthProjection, budgetStatus, crossedThresholds, nextReminderDate,
   shouldRemind, validateExpense, toCSV, parseBackup, getCategory,
+  distanceMeters, formatDistance, categoryFromOSMTags, parseOverpassPlaces, nearbyHistoryPlaces, totalsByPlace, normalizePlace,
 } from '../js/core.js';
 
 const e = (amount, category, date, extra = {}) => ({ id: `${date}-${amount}`, amount, category, date, createdAt: 0, ...extra });
@@ -98,14 +99,73 @@ test('validateExpense aponta campos inválidos', () => {
 });
 
 test('toCSV usa ; e vírgula decimal, escapando textos', () => {
-  const csv = toCSV([e(1234, 'alimentacao', '2026-09-30', { note: 'Almoço; "bom"', payment: 'pix' })]);
-  assert.equal(csv, 'Data;Categoria;Descrição;Pagamento;Valor\n30/09/2026;Alimentação;"Almoço; ""bom""";Pix;12,34');
+  const csv = toCSV([e(1234, 'alimentacao', '2026-09-30', { note: 'Almoço; "bom"', payment: 'pix', place: { name: 'Bar do Zé' } })]);
+  assert.equal(csv, 'Data;Categoria;Descrição;Local;Pagamento;Valor\n30/09/2026;Alimentação;"Almoço; ""bom""";Bar do Zé;Pix;12,34');
 });
 
 test('parseBackup aceita backup do app e descarta itens inválidos', () => {
-  const text = JSON.stringify({ settings: { monthlyBudget: 1000 }, expenses: [e(100, 'mercado', '2026-09-30'), { amount: -1 }] });
+  const text = JSON.stringify({ settings: { monthlyBudget: 1000 }, expenses: [e(100, 'mercado', '2026-09-30', { place: { name: 'Extra', lat: -23.5, lon: -46.6 } }), { amount: -1 }] });
   const { expenses, settings } = parseBackup(text);
   assert.equal(expenses.length, 1);
+  assert.deepEqual(expenses[0].place, { name: 'Extra', lat: -23.5, lon: -46.6 });
   assert.equal(settings.monthlyBudget, 1000);
   assert.throws(() => parseBackup('{"foo":1}'));
+});
+
+// Av. Paulista (MASP) e pontos próximos
+const masp = { lat: -23.5614, lon: -46.6559 };
+
+test('distanceMeters e formatDistance', () => {
+  assert.equal(Math.round(distanceMeters(masp, masp)), 0);
+  const d = distanceMeters(masp, { lat: -23.5614 + 0.001, lon: -46.6559 }); // ~111 m
+  assert.ok(d > 105 && d < 117, String(d));
+  assert.equal(formatDistance(42), '40 m');
+  assert.equal(formatDistance(1530), '1,5 km');
+});
+
+test('categoryFromOSMTags mapeia o tipo de estabelecimento', () => {
+  assert.equal(categoryFromOSMTags({ amenity: 'fuel' }), 'combustivel');
+  assert.equal(categoryFromOSMTags({ shop: 'supermarket' }), 'mercado');
+  assert.equal(categoryFromOSMTags({ shop: 'bakery' }), 'alimentacao');
+  assert.equal(categoryFromOSMTags({ amenity: 'pharmacy' }), 'saude');
+  assert.equal(categoryFromOSMTags({ healthcare: 'laboratory' }), 'saude');
+  assert.equal(categoryFromOSMTags({ amenity: 'parking' }), 'transporte');
+  assert.equal(categoryFromOSMTags({ leisure: 'fitness_centre' }), 'lazer');
+  assert.equal(categoryFromOSMTags({ shop: 'clothes' }), null);
+});
+
+test('parseOverpassPlaces ordena por distância, usa centro de áreas e remove repetidos', () => {
+  const json = { elements: [
+    { type: 'way', center: { lat: -23.5624, lon: -46.6559 }, tags: { name: 'Pão de Açúcar', shop: 'supermarket', 'addr:street': 'Av. Paulista', 'addr:housenumber': '1000' } },
+    { type: 'node', lat: -23.5615, lon: -46.6559, tags: { name: 'Posto Shell', amenity: 'fuel' } },
+    { type: 'node', lat: -23.5630, lon: -46.6559, tags: { name: 'posto shell', amenity: 'fuel' } },
+    { type: 'node', lat: -23.5616, lon: -46.6559, tags: { amenity: 'bench' } },
+  ] };
+  const places = parseOverpassPlaces(json, masp);
+  assert.deepEqual(places.map((p) => [p.name, p.category]), [['Posto Shell', 'combustivel'], ['Pão de Açúcar', 'mercado']]);
+  assert.equal(places[1].address, 'Av. Paulista, 1000');
+  assert.deepEqual(parseOverpassPlaces({}, masp), []);
+});
+
+test('nearbyHistoryPlaces sugere lugares já usados por perto com a categoria mais comum', () => {
+  const near = { name: 'Padaria Real', lat: -23.5615, lon: -46.6560 };
+  const list = [
+    e(800, 'alimentacao', '2026-09-28', { place: near, note: 'café' }),
+    e(900, 'alimentacao', '2026-09-29', { place: { ...near, name: 'padaria real' } }),
+    e(500, 'mercado', '2026-09-30', { place: near }),
+    e(9000, 'combustivel', '2026-09-30', { place: { name: 'Posto longe', lat: -23.60, lon: -46.70 } }),
+    e(100, 'outros', '2026-09-30', { place: { name: 'Sem coordenadas' } }),
+  ];
+  const found = nearbyHistoryPlaces(list, masp);
+  assert.equal(found.length, 1);
+  assert.equal(found[0].count, 3);
+  assert.equal(found[0].category, 'alimentacao');
+  assert.deepEqual(totalsByPlace(list).map((p) => [p.name, p.total]), [['Posto longe', 9000], ['Padaria Real', 2200], ['Sem coordenadas', 100]]);
+});
+
+test('normalizePlace exige nome e valida coordenadas', () => {
+  assert.equal(normalizePlace({ name: '  ' }), null);
+  assert.equal(normalizePlace(null), null);
+  assert.deepEqual(normalizePlace({ name: ' Bar ', lat: 91, lon: 0 }), { name: 'Bar' });
+  assert.deepEqual(normalizePlace({ name: 'Bar', lat: '-23.5', lon: '-46.6' }), { name: 'Bar', lat: -23.5, lon: -46.6 });
 });
