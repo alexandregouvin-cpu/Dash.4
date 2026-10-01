@@ -1,0 +1,81 @@
+rules_version = '2';
+
+// Regras de segurança da conta compartilhada.
+// Só quem é membro de uma casa lê ou altera os dados dela; para entrar é preciso ter o código de convite.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(hid) {
+      return signedIn() && exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+    }
+
+    function validExpense(e) {
+      return e.keys().hasOnly(['amount', 'category', 'note', 'date', 'payment', 'place', 'createdAt', 'createdBy', 'createdByName', 'updatedAt'])
+        && e.amount is int && e.amount > 0 && e.amount < 100000000000
+        && e.category in ['alimentacao', 'mercado', 'combustivel', 'transporte', 'saude', 'casa', 'lazer', 'imprevistos', 'outros']
+        && e.date is string && e.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && e.note is string && e.note.size() <= 120
+        && e.payment is string && e.payment.size() <= 20
+        && e.createdAt is number
+        && e.createdBy is string
+        && e.createdByName is string && e.createdByName.size() <= 40
+        && (!('place' in e) || (e.place is map && e.place.name is string && e.place.name.size() <= 80));
+    }
+
+    // Casa atual do usuário: só ele mesmo lê e escreve.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Convites: quem tem o código consegue ler aquele convite (mas não listar outros).
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow create: if isMember(request.resource.data.householdId)
+        && request.resource.data.createdBy == request.auth.uid;
+      allow delete: if isMember(resource.data.householdId);
+    }
+
+    match /households/{hid} {
+      allow get: if isMember(hid);
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.inviteCode is string;
+      // Membros mudam nome, orçamento e convite; o criador não muda.
+      allow update: if isMember(hid)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.monthlyBudget is int && request.resource.data.monthlyBudget >= 0
+        && request.resource.data.dailyLimit is int && request.resource.data.dailyLimit >= 0;
+
+      match /members/{uid} {
+        allow read: if isMember(hid);
+        // Entrar na casa: o criador (logo após criar) ou alguém com um convite válido para esta casa.
+        allow create: if signedIn() && request.auth.uid == uid
+          && request.resource.data.name is string && request.resource.data.name.size() <= 40
+          && (
+            get(/databases/$(database)/documents/households/$(hid)).data.createdBy == uid
+            || (request.resource.data.code is string
+                && request.resource.data.code.size() > 0
+                && get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.householdId == hid)
+          );
+        allow update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.code == resource.data.code;
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
+
+      match /expenses/{eid} {
+        allow read: if isMember(hid);
+        // O autor tem de ser membro da casa (permite "desfazer" a exclusão de um gasto do outro).
+        allow create: if isMember(hid) && validExpense(request.resource.data)
+          && exists(/databases/$(database)/documents/households/$(hid)/members/$(request.resource.data.createdBy));
+        // Qualquer membro corrige ou apaga um gasto, mas o autor original é preservado.
+        allow update: if isMember(hid) && validExpense(request.resource.data)
+          && request.resource.data.createdBy == resource.data.createdBy;
+        allow delete: if isMember(hid);
+      }
+    }
+  }
+}

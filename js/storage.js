@@ -10,6 +10,12 @@ export const DEFAULT_SETTINGS = {
   budgetAlerts: true,
   autoPlace: false,
   lastReminderDate: '',
+  // Conta compartilhada (por aparelho)
+  householdId: '', // casa em uso, para abrir rápido e offline
+  householdUid: '', // usuário dono dessa informação
+  partnerAlerts: true, // avisar quando a outra pessoa registrar um gasto
+  migratedTo: '', // casa para a qual os gastos deste aparelho já foram enviados
+  pendingInvite: '', // código de convite aberto por link, aguardando login
 };
 
 export function load() {

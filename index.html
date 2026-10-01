@@ -24,7 +24,7 @@
     <!-- HOJE -->
     <section id="view-today" class="view" data-title="Hoje">
       <div class="card hero">
-        <span class="label">Gasto hoje</span>
+        <span class="label" id="hero-label">Gasto hoje</span>
         <strong id="today-total" class="big">R$ 0,00</strong>
         <div id="daily-limit" class="hint" hidden></div>
         <div class="hero-row">
@@ -77,6 +77,10 @@
         <h2 class="card-title">Últimos 7 dias</h2>
         <div id="sum-week" class="week"></div>
       </div>
+      <div class="card" id="sum-people-card" hidden>
+        <h2 class="card-title">Quem gastou quanto</h2>
+        <ul id="sum-people" class="bars"></ul>
+      </div>
       <div class="card" id="sum-places-card" hidden>
         <h2 class="card-title">Onde mais gasto</h2>
         <ul id="sum-places" class="bars"></ul>
@@ -85,8 +89,11 @@
 
     <!-- AJUSTES -->
     <section id="view-settings" class="view" data-title="Ajustes" hidden>
+      <div id="account-box" class="card form account"></div>
+
       <form id="settings-form" class="card form">
         <h2 class="card-title">Orçamento</h2>
+        <p id="budget-scope" class="hint" hidden></p>
         <label>Orçamento mensal
           <input name="monthlyBudget" inputmode="decimal" placeholder="Ex.: 3.000,00" autocomplete="off">
         </label>
@@ -110,7 +117,7 @@
 
       <div class="card form">
         <h2 class="card-title">Seus dados</h2>
-        <p class="hint">Tudo fica salvo só neste aparelho. Faça backup de vez em quando.</p>
+        <p class="hint" id="data-hint">Tudo fica salvo só neste aparelho. Faça backup de vez em quando.</p>
         <button type="button" id="export-csv" class="btn secondary">Exportar planilha (CSV)</button>
         <button type="button" id="export-json" class="btn secondary">Baixar backup</button>
         <label class="btn secondary file-btn">Restaurar backup

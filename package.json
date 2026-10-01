@@ -1,11 +1,19 @@
 {
   "name": "controle-de-gastos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "App (PWA) para registrar gastos diários, com lembretes e alertas de orçamento.",
+  "description": "App (PWA) para registrar gastos diários, com lembretes, alertas de orçamento e conta compartilhada.",
   "type": "module",
   "scripts": {
     "start": "npx --yes http-server -c-1 -p 8080 .",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "build:firebase": "esbuild scripts/firebase-entry.js --bundle --format=esm --minify --target=es2020 --legal-comments=eof --outfile=js/vendor/firebase.js",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-gastos \"node --test tests/rules/*.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "esbuild": "^0.28.2",
+    "firebase": "12.19.0",
+    "firebase-tools": "^15.32.1"
   }
 }

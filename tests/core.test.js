@@ -5,6 +5,7 @@ import {
   lastNDaysTotals, dailyAverage, monthProjection, budgetStatus, crossedThresholds, nextReminderDate,
   shouldRemind, validateExpense, toCSV, parseBackup, getCategory,
   distanceMeters, formatDistance, categoryFromOSMTags, parseOverpassPlaces, nearbyHistoryPlaces, totalsByPlace, normalizePlace,
+  totalsByPerson,
 } from '../js/core.js';
 
 const e = (amount, category, date, extra = {}) => ({ id: `${date}-${amount}`, amount, category, date, createdAt: 0, ...extra });
@@ -168,4 +169,17 @@ test('normalizePlace exige nome e valida coordenadas', () => {
   assert.equal(normalizePlace(null), null);
   assert.deepEqual(normalizePlace({ name: ' Bar ', lat: 91, lon: 0 }), { name: 'Bar' });
   assert.deepEqual(normalizePlace({ name: 'Bar', lat: '-23.5', lon: '-46.6' }), { name: 'Bar', lat: -23.5, lon: -46.6 });
+});
+
+test('totalsByPerson soma por quem registrou e usa o nome atual do membro', () => {
+  const list = [
+    e(1000, 'mercado', '2026-10-01', { createdBy: 'ana', createdByName: 'Ana' }),
+    e(3000, 'lazer', '2026-10-01', { createdBy: 'bia', createdByName: 'Bia' }),
+    e(500, 'outros', '2026-10-02', { createdBy: 'ana', createdByName: 'Ana' }),
+    e(100, 'outros', '2026-10-02'),
+  ];
+  assert.deepEqual(
+    totalsByPerson(list, { ana: 'Ana Paula' }).map((p) => [p.name, p.total, p.count]),
+    [['Bia', 3000, 1], ['Ana Paula', 1500, 2], ['Sem autor', 100, 1]],
+  );
 });

@@ -253,3 +253,25 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 /* Mantém os rádios invisíveis dentro do seu chip/cartão (senão alargam o formulário). */
 .cat-grid, .chips label { position: relative; }
 .cat-grid input, .chips input { width: 1px; height: 1px; margin: 0; top: 0; left: 0; }
+
+/* Conta compartilhada */
+.account .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.account .tabs .chip { flex: 1; text-align: center; }
+.account .row-actions { display: flex; gap: 8px; }
+.account .row-actions .btn { margin-top: 8px; }
+.account .link-btn { background: none; border: 0; padding: 8px 0; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+.account .banner {
+  padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 0.9rem;
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface)); color: var(--text);
+}
+.account .house { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.account .house span { font-size: 2rem; }
+.account .house strong { display: block; font-size: 1.1rem; }
+.members { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; gap: 6px; }
+.members li { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+.avatar {
+  flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--primary); color: var(--primary-contrast); font-weight: 700; font-size: 0.85rem;
+}
+.invite-code { font-family: ui-monospace, monospace; font-size: 1.1rem; letter-spacing: 0.08em; font-weight: 700; color: var(--text); }
+.account .error { margin: 0 0 10px; }

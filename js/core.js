@@ -382,3 +382,18 @@ export function normalizePlace(p) {
   const hasCoords = p.lat != null && p.lon != null && Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
   return { name, ...(hasCoords ? { lat, lon } : {}), ...(p.address ? { address: String(p.address).slice(0, 120) } : {}) };
 }
+
+// ---------- Conta compartilhada ----------
+
+// Total por pessoa que registrou: [{ uid, name, total, count }], do maior para o menor.
+export function totalsByPerson(expenses, names = {}) {
+  const totals = new Map();
+  for (const e of expenses) {
+    const uid = e.createdBy ?? '';
+    const t = totals.get(uid) ?? { uid, name: names[uid] ?? e.createdByName ?? 'Sem autor', total: 0, count: 0 };
+    t.total += e.amount;
+    t.count += 1;
+    totals.set(uid, t);
+  }
+  return [...totals.values()].sort((a, b) => b.total - a.total);
+}

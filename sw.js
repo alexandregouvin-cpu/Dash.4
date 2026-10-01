@@ -1,6 +1,6 @@
 // Service worker: funcionamento offline + lembrete diário com o app fechado.
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const APP_CACHE = `gastos-app-${VERSION}`;
 const STATE_CACHE = 'gastos-shared-state';
 const STATE_URL = new URL('./__state.json', self.registration.scope).href;
@@ -14,6 +14,9 @@ const ASSETS = [
   './js/storage.js',
   './js/notifications.js',
   './js/places.js',
+  './js/sync.js',
+  './js/firebase-config.js',
+  './js/vendor/firebase.js',
   './manifest.webmanifest',
   './icons/icon.svg',
   './icons/icon-192.png',

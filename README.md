@@ -20,6 +20,8 @@ sem passar por loja. Funciona offline e os dados ficam só no seu aparelho.
 - **Notificações**:
   - lembrete diário no horário que você escolher, só se você ainda não registrou nada no dia;
   - alerta ao atingir 80% e 100% do orçamento mensal e ao passar do limite diário.
+- **Conta compartilhada** 👥: duas (ou mais) pessoas veem e registram os mesmos gastos, em tempo real.
+  Veja [Conta compartilhada](#conta-compartilhada).
 - **Dados**: exportar planilha CSV (abre no Excel/Google Planilhas), backup e restauração em JSON.
 
 ## Localização
@@ -39,6 +41,35 @@ Em **Ajustes → Localização** você pode ligar a sugestão automática ao abr
 Privacidade: sua posição só é enviada ao serviço de mapas quando você toca em 📍. A cobertura do OpenStreetMap
 é boa em cidades grandes, mas pode faltar estabelecimento em lugares menores. Nesse caso, digite o nome.
 Depois disso, o lugar passa a aparecer pelo histórico.
+
+## Conta compartilhada
+
+Em **Ajustes → Conta compartilhada**, cada pessoa entra com e-mail e senha. Uma delas cria a **casa**
+e toca em **Enviar convite**; a outra abre o link, cria a conta e entra. A partir daí:
+
+- os gastos de todos aparecem para todos, em segundos, mostrando **quem registrou** (👤);
+- o orçamento mensal e o limite diário valem para a casa inteira, e os alertas de 80%/100% chegam para todos;
+- com o app aberto ou em segundo plano, cada um é avisado quando o outro registra um gasto;
+- sem internet, os gastos ficam no aparelho e sobem sozinhos quando a conexão volta;
+- o **Resumo** mostra “Quem gastou quanto”;
+- os gastos que já estavam no aparelho podem ser enviados para a casa ao entrar.
+
+Os dados ficam no Firebase (Google), protegidos pelas regras de `firestore.rules`: só membros da casa leem
+ou alteram os gastos, e só entra quem tem o código de convite. Avisos com o app **totalmente fechado** exigiriam
+Cloud Functions (plano pago do Firebase) e não estão incluídos.
+
+### Configurar o Firebase (uma vez, ~10 minutos, plano gratuito)
+
+1. Em <https://console.firebase.google.com>, **Criar um projeto** (o Google Analytics pode ficar desativado).
+2. **Authentication → Vamos começar → Método de login → E-mail/senha → Ativar → Salvar**.
+3. **Firestore Database → Criar banco de dados**, local `southamerica-east1 (São Paulo)`, **modo de produção**.
+4. Na aba **Regras** do Firestore, apague o conteúdo, cole o arquivo [`firestore.rules`](firestore.rules) e **Publicar**.
+5. **Configurações do projeto (⚙️) → Geral → Seus apps → Web (`</>`)**, dê um apelido e **Registrar app**
+   (não precisa do Firebase Hosting). Copie o objeto `firebaseConfig` mostrado.
+6. Cole esse objeto em [`js/firebase-config.js`](js/firebase-config.js), no lugar de `null`, e publique.
+
+Esses valores identificam o projeto e não são senhas: a proteção vem das regras do passo 4.
+Enquanto `firebaseConfig` for `null`, o app funciona só no aparelho, como antes.
 
 ## Como instalar no celular
 
@@ -68,8 +99,11 @@ O endereço fica `https://<usuario>.github.io/<repositorio>/`.
 Sem dependências nem etapa de build: HTML, CSS e JavaScript (módulos ES).
 
 ```bash
-npm start   # servidor local em http://localhost:8080
-npm test    # testes da lógica (node --test)
+npm start            # servidor local em http://localhost:8080
+npm test             # testes da lógica (node --test)
+npm install          # ferramentas abaixo (Firebase SDK, emulador, esbuild)
+npm run test:rules   # testa firestore.rules no emulador (precisa de Java)
+npm run build:firebase  # regera js/vendor/firebase.js a partir de scripts/firebase-entry.js
 ```
 
 | Arquivo | Conteúdo |
@@ -80,6 +114,9 @@ npm test    # testes da lógica (node --test)
 | `js/storage.js` | Salvamento local (localStorage) |
 | `js/notifications.js` | Permissão, lembrete diário e alertas |
 | `js/places.js` | GPS do aparelho e busca de estabelecimentos no OpenStreetMap |
+| `js/sync.js`, `js/firebase-config.js` | Conta compartilhada: login, casa, convite, sincronização |
+| `js/vendor/firebase.js` | SDK do Firebase empacotado (gerado; carregado só se configurado) |
+| `firestore.rules`, `tests/rules/` | Regras de segurança do banco e seus testes |
 | `sw.js` | Service worker: offline, lembrete em segundo plano, clique na notificação |
 | `manifest.webmanifest`, `icons/` | Instalação como app |
 
