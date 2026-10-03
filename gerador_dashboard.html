@@ -76,7 +76,7 @@
   body.mode-tv .brand .titles p{font-size:15px;}
   body.mode-tv .tool-tag{display:none;}
   body.mode-tv .tv-clock{display:block;}
-  body.mode-tv main{padding:18px 40px 10px;max-width:none;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  body.mode-tv main{padding:18px 40px 10px;max-width:none;width:100%;margin:0;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
   body.mode-tv #dashboardContent:not([style*="none"]){display:flex !important;flex-direction:column;flex:1 1 auto;min-height:0;}
   body.mode-tv #setupArea,body.mode-tv .tv-hide{display:none !important;}
   body.mode-tv .rs-side{gap:16px;}
@@ -222,6 +222,11 @@
   .rs-apoio{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12px;color:var(--text-secondary);opacity:.8;margin-top:-4px;}
   .rs-apoio b{color:var(--text-primary);font-weight:600;}
   body.mode-tv .resumo{flex:0 0 auto;margin-bottom:16px !important;gap:16px;}
+  body.mode-tv .resumo.dia-aberto{flex:1 1 auto;min-height:0;grid-template-rows:auto minmax(0,1fr);margin-bottom:0 !important;}
+  body.mode-tv .resumo.dia-aberto .rs-main{display:flex;flex-direction:column;min-height:0;}
+  body.mode-tv .resumo.dia-aberto .rs-det{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none;}
+  body.mode-tv .resumo.dia-aberto .rs-det::-webkit-scrollbar{display:none;}
+  body.mode-tv .resumo.dia-aberto ~ .top-list{display:none;}
   body.mode-tv .rs-big{font-size:96px;}
   body.mode-tv .rs-sq{height:96px;font-size:34px;border-radius:10px;}
 
@@ -510,7 +515,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v36</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v37</footer>
 
 <script>
 /* =========================================================
@@ -884,7 +889,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v36`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v37`;
 
   renderAll();
   nuvem.arquivo = fileNameStr;
@@ -1072,6 +1077,7 @@ function renderKpis(){
   const pendentes = processedRows.filter(r=>r.pendente_sem_entrega).sort((a,b)=>b.diasAtraso-a.diasAtraso);
   const maisAntigo = pendentes[0];
 
+  els.kpis.classList.toggle("dia-aberto", diaSel >= 0);
   els.kpis.innerHTML = `
     <div class="rs-side">
       <div class="rs-card rs-mini"><span class="t">Próximo recebimento</span>${
@@ -1389,7 +1395,7 @@ function aplicarDadosDaNuvem(payload){
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
   const quando = payload.publicadoEm ? new Date(payload.publicadoEm).toLocaleString("pt-BR") : "";
-  els.footerInfo.textContent = `Fonte: ${payload.arquivo || "relatório publicado"} · Enviado em ${quando} · atualiza sozinho · Apis Flora · build v36`;
+  els.footerInfo.textContent = `Fonte: ${payload.arquivo || "relatório publicado"} · Enviado em ${quando} · atualiza sozinho · Apis Flora · build v37`;
   renderAll();
 }
 
@@ -1475,17 +1481,28 @@ function setupModoTV(){
   }
   window.addEventListener("resize", ajustarZoom);
 
-  // Lista "Próximas entregas": rola sozinha quando não cabe na tela
+  // Listas que não cabem na tela rolam sozinhas: "Próximas entregas" e os itens do dia aberto.
+  // Para 15 s quando alguém mexe o mouse ou a rodinha, para não brigar com quem está olhando.
   const reduzir = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let pausaAte = 0;
-  setInterval(()=>{
-    const lista = document.getElementById("topListBody");
-    if(!lista || !ehTV() || reduzir) return;
-    if(lista.scrollHeight <= lista.clientHeight + 2){ lista.scrollTop = 0; return; }
+  const pausas = new WeakMap();
+  let pausaManual = 0;
+  ["wheel","mousemove","touchstart"].forEach(ev=>document.addEventListener(ev, ()=>{ pausaManual = Date.now() + 15000; }, {passive:true}));
+  function rolar(el){
+    if(!el) return;
+    if(el.scrollHeight <= el.clientHeight + 2){ el.scrollTop = 0; return; }
     const agora = Date.now();
-    if(agora < pausaAte) return;
-    if(lista.scrollTop + lista.clientHeight >= lista.scrollHeight - 1){ pausaAte = agora + 5000; setTimeout(()=>{ lista.scrollTop = 0; pausaAte = Date.now() + 5000; }, 5000); return; }
-    lista.scrollTop += 1;
+    if(agora < (pausas.get(el) || 0)) return;
+    if(el.scrollTop + el.clientHeight >= el.scrollHeight - 1){
+      pausas.set(el, agora + 10000);
+      setTimeout(()=>{ el.scrollTop = 0; pausas.set(el, Date.now() + 5000); }, 5000);
+      return;
+    }
+    el.scrollTop += 1;
+  }
+  setInterval(()=>{
+    if(!ehTV() || reduzir || Date.now() < pausaManual) return;
+    rolar(document.getElementById("topListBody"));
+    rolar(document.querySelector("#kpis.dia-aberto .rs-det"));
   }, 40);
 
   // Esconde o cursor parado no Modo TV
