@@ -315,6 +315,7 @@
   .badge.inconsistente{background:rgba(124,77,255,0.18);color:#B69CFF;}
 
   .empty-state{padding:60px 20px;text-align:center;color:var(--text-secondary);font-size:13px;}
+  footer.aviso-dados{color:#ffb3b8;opacity:1;font-weight:700;}
   footer{padding:12px 32px;text-align:center;font-size:11px;color:var(--text-secondary);opacity:.7;}
   body.mode-tv footer{padding:6px 40px;font-size:13px;}
   body.mode-tv .panel{display:none;}
@@ -515,7 +516,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v37</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v38</footer>
 
 <script>
 /* =========================================================
@@ -551,6 +552,8 @@ function fmtData(val){
     const y = val.getFullYear();
     return `${d}/${m}/${y}`;
   }
+  const iso = val.toString().match(/^(\d{4})-(\d{2})-(\d{2})/); // texto ISO (dados gerados pelo script)
+  if(iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
   return val.toString().split(" ")[0]; // remove hora se vier como string "00:00"
 }
 function toDate(val){
@@ -630,17 +633,8 @@ els.fileInputPrincipal.addEventListener("change", e=>{
   const reader = new FileReader();
   reader.onload = evt=>{
     try{
-      const data = new Uint8Array(evt.target.result);
-      const wb = XLSX.read(data, {type:"array", cellDates:true});
-      const pedidoSheet = findSheet(wb, "pedido_compras");
-      const recebSheet = findSheet(wb, "recebimento_compras");
-      if(!pedidoSheet || !recebSheet){
-        showStatus("Não encontrei as abas 'Pedido_compras' e/ou 'Recebimento_compras' no arquivo.", true);
-        return;
-      }
-      const pedidoRows = XLSX.utils.sheet_to_json(wb.Sheets[pedidoSheet], {defval:""});
-      const recebRows = XLSX.utils.sheet_to_json(wb.Sheets[recebSheet], {defval:""});
-      processarDados(pedidoRows, recebRows, file.name);
+      const wb = XLSX.read(new Uint8Array(evt.target.result), {type:"array", cellDates:true});
+      lerRelatorioWorkbook(wb, file.name);
     }catch(err){
       console.error(err);
       showStatus("Erro ao ler o arquivo. Confira se é o relatório .xlsx correto.", true);
@@ -649,6 +643,20 @@ els.fileInputPrincipal.addEventListener("change", e=>{
   reader.readAsArrayBuffer(file);
   e.target.value = ""; // permite escolher de novo um arquivo com o mesmo nome (o relatório do dia seguinte)
 });
+
+// Lê as abas Pedido_compras e Recebimento_compras e processa. Usado pelo upload e pelos dados da pasta.
+function lerRelatorioWorkbook(wb, nomeArquivo){
+  const pedidoSheet = findSheet(wb, "pedido_compras");
+  const recebSheet = findSheet(wb, "recebimento_compras");
+  if(!pedidoSheet || !recebSheet){
+    showStatus("Não encontrei as abas 'Pedido_compras' e/ou 'Recebimento_compras' no arquivo.", true);
+    return false;
+  }
+  const pedidoRows = XLSX.utils.sheet_to_json(wb.Sheets[pedidoSheet], {defval:""});
+  const recebRows = XLSX.utils.sheet_to_json(wb.Sheets[recebSheet], {defval:""});
+  processarDados(pedidoRows, recebRows, nomeArquivo);
+  return true;
+}
 
 function findSheet(wb, wantedNormalized){
   return wb.SheetNames.find(n => normalize(n).replace(/\s/g,"_").toLowerCase().includes(wantedNormalized))
@@ -667,20 +675,9 @@ els.fileInputEfetiva.addEventListener("change", e=>{
   const reader = new FileReader();
   reader.onload = evt=>{
     try{
-      const data = new Uint8Array(evt.target.result);
-      const wb = XLSX.read(data, {type:"array", cellDates:true});
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
-      if(rows.length === 0) return;
-      efetivaRawRows = rows;
-      efetivaHeaders = Object.keys(rows[0]);
-      els.mapPedido.innerHTML = efetivaHeaders.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
-      els.mapDataEfetiva.innerHTML = efetivaHeaders.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
-      // tenta pré-selecionar por nome provável
-      preselect(els.mapPedido, efetivaHeaders, ["pedido","nro_pedido","numero"]);
-      preselect(els.mapDataEfetiva, efetivaHeaders, ["efetiv","real","entrega"]);
-      els.mappingRow.classList.remove("hide");
-      buildEntregaEfetivaMap();
+      const wb = XLSX.read(new Uint8Array(evt.target.result), {type:"array", cellDates:true});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:""});
+      if(!aplicarEfetivaRows(rows)) return;
       if(processedRows.length){ renderAll(); agendarPublicacaoTV(); } // re-renderiza (e republica) se já havia dashboard pronto
     }catch(err){
       console.error(err);
@@ -689,6 +686,21 @@ els.fileInputEfetiva.addEventListener("change", e=>{
   reader.readAsArrayBuffer(file);
   e.target.value = ""; // permite escolher de novo um arquivo com o mesmo nome (o relatório do dia seguinte)
 });
+
+// Monta o mapa de entregas efetivas a partir das linhas da planilha (upload ou dados da pasta)
+function aplicarEfetivaRows(rows){
+  if(!rows || rows.length === 0) return false;
+  efetivaRawRows = rows;
+  efetivaHeaders = Object.keys(rows[0]);
+  els.mapPedido.innerHTML = efetivaHeaders.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
+  els.mapDataEfetiva.innerHTML = efetivaHeaders.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join("");
+  // tenta pré-selecionar por nome provável
+  preselect(els.mapPedido, efetivaHeaders, ["pedido","nro_pedido","numero"]);
+  preselect(els.mapDataEfetiva, efetivaHeaders, ["efetiv","real","entrega"]);
+  els.mappingRow.classList.remove("hide");
+  buildEntregaEfetivaMap();
+  return true;
+}
 
 function preselect(selectEl, headers, hints){
   const found = headers.find(h => hints.some(hint => normalize(h).toLowerCase().includes(hint)));
@@ -889,7 +901,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v37`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v38`;
 
   renderAll();
   nuvem.arquivo = fileNameStr;
@@ -1395,7 +1407,7 @@ function aplicarDadosDaNuvem(payload){
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
   const quando = payload.publicadoEm ? new Date(payload.publicadoEm).toLocaleString("pt-BR") : "";
-  els.footerInfo.textContent = `Fonte: ${payload.arquivo || "relatório publicado"} · Enviado em ${quando} · atualiza sozinho · Apis Flora · build v37`;
+  els.footerInfo.textContent = `Fonte: ${payload.arquivo || "relatório publicado"} · Enviado em ${quando} · atualiza sozinho · Apis Flora · build v38`;
   renderAll();
 }
 
@@ -1426,6 +1438,67 @@ async function iniciarNuvem(){
   }, err=>console.warn("Aviso de atualização do relatório indisponível:", err && err.code));
 }
 iniciarNuvem();
+
+/* =========================================================
+   DADOS DA PASTA (SharePoint/OneDrive sincronizado)
+   O script automacao/atualizar_dados_tv.ps1 grava dados/entregas_dados.js
+   ao lado deste arquivo. A página lê esse arquivo ao abrir e de novo a
+   cada 5 minutos; quando ele muda, redesenha sozinha. Formatos aceitos:
+   - "xlsx-base64": o próprio relatório exportado do SAP (e a planilha de
+     entrega efetiva, se houver), em base64;
+   - "linhas": as linhas das consultas (pedido, recebimento, efetivaLinhas),
+     quando o script consulta o banco do SAP direto.
+   ========================================================= */
+const PASTA_ARQUIVO_DADOS = "dados/entregas_dados.js";
+const PASTA_INTERVALO_MS = 5*60*1000;
+let pastaUltimaGeracao = null;
+
+function lerDadosPasta(){
+  const s = document.createElement("script");
+  s.src = PASTA_ARQUIVO_DADOS + "?v=" + Date.now(); // evita pegar a versão antiga do cache
+  s.onload = ()=>{ s.remove(); aplicarDadosPasta(window.ENTREGAS_DADOS); };
+  s.onerror = ()=>{ s.remove(); }; // sem arquivo de dados: segue com upload manual
+  document.head.appendChild(s);
+}
+
+function aplicarDadosPasta(d){
+  if(!d || !d.geradoEm || d.geradoEm === pastaUltimaGeracao) return;
+  try{
+    // a planilha efetiva vem primeiro: o processamento do relatório já usa o mapa
+    if(d.formato === "linhas"){
+      if(d.efetivaLinhas) aplicarEfetivaRows(d.efetivaLinhas);
+      processarDados(d.pedido || [], d.recebimento || [], d.arquivo || "consulta SAP");
+    } else {
+      if(d.efetiva && d.efetiva.conteudo){
+        const wbE = XLSX.read(d.efetiva.conteudo, {type:"base64", cellDates:true});
+        aplicarEfetivaRows(XLSX.utils.sheet_to_json(wbE.Sheets[wbE.SheetNames[0]], {defval:""}));
+      }
+      const wb = XLSX.read(d.conteudo, {type:"base64", cellDates:true});
+      if(!lerRelatorioWorkbook(wb, d.arquivo || "relatório")) return;
+    }
+    pastaUltimaGeracao = d.geradoEm;
+    const gerado = new Date(d.geradoEm);
+    const horas = (Date.now() - gerado.getTime()) / 3600000;
+    const aviso = horas > 36 ? ` · ATENÇÃO: dados de ${gerado.toLocaleDateString("pt-BR")}, confira a atualização automática` : "";
+    els.footerInfo.textContent = `Fonte: ${d.arquivo || "SAP"} · Atualizado em ${gerado.toLocaleString("pt-BR")} · atualiza sozinho${aviso} · Apis Flora · build v38`;
+    els.footerInfo.classList.toggle("aviso-dados", !!aviso);
+  }catch(err){
+    console.error("Falha ao ler os dados da pasta:", err);
+  }
+}
+
+if(!window.claude){ // no link do claude.ai os dados vêm da nuvem do link; aqui, da pasta
+  lerDadosPasta();
+  setInterval(lerDadosPasta, PASTA_INTERVALO_MS);
+}
+
+// Abrir com #tv no fim do endereço já entra no Modo TV (útil no atalho da TV)
+if(/(^|[#&])tv\b/i.test(location.hash.slice(1))){
+  setTimeout(()=>{ // depois do setupModoTV, que liga o zoom para telas 4K
+    const b = document.querySelector('#modeToggle [data-mode="tv"]');
+    if(b) b.click();
+  }, 0);
+}
 
 // A TV fica ligada dias seguidos: na virada do dia, recalcula "hoje", atrasos e a janela de 14 dias
 let diaRenderizado = new Date().toDateString();
