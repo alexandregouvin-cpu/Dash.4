@@ -24,11 +24,15 @@ param(
 )
 $ErrorActionPreference = "Stop"
 $nome = "Painel Entregas - atualizar dados"
-$script = Join-Path $PSScriptRoot "atualizar_dados_tv.ps1"
+# Pasta deste script (em alguns Windows PowerShell 5.1 o $PSScriptRoot vem vazio)
+$pastaScript = $PSScriptRoot
+if (-not $pastaScript -and $MyInvocation.MyCommand.Path) { $pastaScript = Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $pastaScript) { $pastaScript = (Get-Location).ProviderPath }
+$script = Join-Path $pastaScript "atualizar_dados_tv.ps1"
 if (-not (Test-Path $script)) { throw "Não encontrei $script" }
 
 $argumentos = "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$script`" $ArgumentosExtras"
-$acao = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $argumentos -WorkingDirectory $PSScriptRoot
+$acao = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $argumentos -WorkingDirectory $pastaScript
 $gatilho = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday,Saturday -At $Inicio
 $repeticao = New-ScheduledTaskTrigger -Once -At $Inicio -RepetitionInterval (New-TimeSpan -Minutes $IntervaloMinutos) -RepetitionDuration (New-TimeSpan -Hours $HorasPorDia)
 $gatilho.Repetition = $repeticao.Repetition
@@ -42,4 +46,4 @@ Register-ScheduledTask -TaskName $nome -Action $acao -Trigger $gatilho -Settings
 
 Write-Host "Tarefa '$nome' criada: a cada $IntervaloMinutos min, seg a sáb, das $Inicio por $HorasPorDia h."
 Write-Host "Para rodar agora: Start-ScheduledTask -TaskName '$nome'"
-Write-Host "Histórico: $(Join-Path (Split-Path -Parent $PSScriptRoot) 'dados\atualizacao.log')"
+Write-Host "Histórico: $(Join-Path (Split-Path -Parent $pastaScript) 'dados\atualizacao.log')"

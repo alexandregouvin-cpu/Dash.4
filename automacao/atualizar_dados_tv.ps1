@@ -31,7 +31,7 @@
 [CmdletBinding()]
 param(
   # Pasta do painel (onde fica painel_tv.html). Padrão: a pasta acima de "automacao".
-  [string]$PastaPainel = (Split-Path -Parent $PSScriptRoot),
+  [string]$PastaPainel = "",
   # Onde o relatório .xlsx é salvo. Padrão: <PastaPainel>\relatorios
   [string]$PastaRelatorios = "",
   # Nome do relatório principal (curingas permitidos)
@@ -54,6 +54,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 $utf8 = New-Object System.Text.UTF8Encoding($false)
+
+# Pasta deste script. Em alguns Windows PowerShell 5.1 o $PSScriptRoot vem vazio: usa o caminho do
+# próprio script e, em último caso, a pasta atual (de onde o comando foi rodado).
+$pastaScript = $PSScriptRoot
+if (-not $pastaScript -and $MyInvocation.MyCommand.Path) { $pastaScript = Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $pastaScript) { $pastaScript = (Get-Location).ProviderPath }
+if (-not $PastaPainel) { $PastaPainel = Split-Path -Parent $pastaScript }
+$PastaPainel = (Resolve-Path -LiteralPath $PastaPainel).ProviderPath
 
 if (-not $PastaRelatorios) { $PastaRelatorios = Join-Path $PastaPainel "relatorios" }
 $pastaDados = Join-Path $PastaPainel "dados"
