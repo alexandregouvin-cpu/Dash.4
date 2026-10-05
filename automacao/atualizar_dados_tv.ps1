@@ -58,6 +58,7 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 if (-not $PastaRelatorios) { $PastaRelatorios = Join-Path $PastaPainel "relatorios" }
 $pastaDados = Join-Path $PastaPainel "dados"
 $arquivoDados = Join-Path $pastaDados "entregas_dados.js"
+$arquivoVersao = Join-Path $pastaDados "versao.js"
 $arquivoAssinatura = Join-Path $pastaDados ".assinatura"
 $arquivoLog = Join-Path $pastaDados "atualizacao.log"
 if (-not (Test-Path $pastaDados)) { New-Item -ItemType Directory -Path $pastaDados | Out-Null }
@@ -127,11 +128,13 @@ function Executar-Consulta([string]$arquivoSql) {
   return ,(Converter-Tabela $tabela)
 }
 
-function Gravar-Dados([string]$conteudoJs, [string]$assinatura) {
+function Gravar-Dados([string]$conteudoJs, [string]$assinatura, [string]$geradoEm) {
   # grava num temporário e troca de uma vez, para a TV nunca ler um arquivo pela metade
   $tmp = "$arquivoDados.tmp"
   [System.IO.File]::WriteAllText($tmp, $conteudoJs, $utf8)
   Move-Item -Path $tmp -Destination $arquivoDados -Force
+  # versão por último: a TV só baixa os dados (que podem ter dezenas de MB) quando ela muda
+  [System.IO.File]::WriteAllText($arquivoVersao, "window.ENTREGAS_VERSAO = $(Texto-Json $geradoEm);", $utf8)
   [System.IO.File]::WriteAllText($arquivoAssinatura, $assinatura, $utf8)
 }
 
@@ -161,7 +164,7 @@ try {
       exit 0
     }
     $js = "window.ENTREGAS_DADOS = {""versao"":1,""formato"":""linhas"",""geradoEm"":$(Texto-Json $agora),""arquivo"":""Consulta SAP"",""pedido"":$jsonPedido,""recebimento"":$jsonReceb,""efetivaLinhas"":$jsonEfetiva};"
-    Gravar-Dados $js $assinatura
+    Gravar-Dados $js $assinatura $agora
     Registrar "Dados gravados pela consulta: $($pedido.Count) linhas de pedido, $($receb.Count) de recebimento."
     exit 0
   }
@@ -192,7 +195,7 @@ try {
     $partEfetiva = "{""arquivo"":$(Texto-Json $efe.Name),""conteudo"":""$b64e""}"
   }
   $js = "window.ENTREGAS_DADOS = {""versao"":1,""formato"":""xlsx-base64"",""geradoEm"":$(Texto-Json $agora),""arquivo"":$(Texto-Json $rel.Name),""conteudo"":""$b64"",""efetiva"":$partEfetiva};"
-  Gravar-Dados $js $assinatura
+  Gravar-Dados $js $assinatura $agora
   $msgEfe = if ($efe) { " + $($efe.Name)" } else { "" }
   Registrar "Dados gravados: $($rel.Name)$msgEfe."
   exit 0

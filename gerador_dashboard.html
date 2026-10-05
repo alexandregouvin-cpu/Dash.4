@@ -516,7 +516,7 @@
 
 </main>
 
-<footer id="footerInfo">Gerador interno · Apis Flora · build v38</footer>
+<footer id="footerInfo">Gerador interno · Apis Flora · build v39</footer>
 
 <script>
 /* =========================================================
@@ -901,7 +901,7 @@ function processarDados(pedidoRows, recebRows, fileNameStr){
   els.emptyState.classList.add("hide");
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
-  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v38`;
+  els.footerInfo.textContent = `Fonte: ${fileNameStr} · Processado em ${new Date().toLocaleString("pt-BR")} · Apis Flora · build v39`;
 
   renderAll();
   nuvem.arquivo = fileNameStr;
@@ -1407,7 +1407,7 @@ function aplicarDadosDaNuvem(payload){
   els.dashboardContent.style.display = "block";
   els.setupArea.style.display = "none";
   const quando = payload.publicadoEm ? new Date(payload.publicadoEm).toLocaleString("pt-BR") : "";
-  els.footerInfo.textContent = `Fonte: ${payload.arquivo || "relatório publicado"} · Enviado em ${quando} · atualiza sozinho · Apis Flora · build v38`;
+  els.footerInfo.textContent = `Fonte: ${payload.arquivo || "relatório publicado"} · Enviado em ${quando} · atualiza sozinho · Apis Flora · build v39`;
   renderAll();
 }
 
@@ -1450,15 +1450,30 @@ iniciarNuvem();
      quando o script consulta o banco do SAP direto.
    ========================================================= */
 const PASTA_ARQUIVO_DADOS = "dados/entregas_dados.js";
+const PASTA_ARQUIVO_VERSAO = "dados/versao.js"; // arquivo pequeno: só diz quando os dados foram gerados
 const PASTA_INTERVALO_MS = 5*60*1000;
 let pastaUltimaGeracao = null;
 
-function lerDadosPasta(){
+function carregarScriptPasta(caminho, aoTerminar){
   const s = document.createElement("script");
-  s.src = PASTA_ARQUIVO_DADOS + "?v=" + Date.now(); // evita pegar a versão antiga do cache
-  s.onload = ()=>{ s.remove(); aplicarDadosPasta(window.ENTREGAS_DADOS); };
-  s.onerror = ()=>{ s.remove(); }; // sem arquivo de dados: segue com upload manual
+  s.src = caminho + "?v=" + Date.now(); // evita pegar a versão antiga do cache
+  s.onload = ()=>{ s.remove(); aoTerminar(true); };
+  s.onerror = ()=>{ s.remove(); aoTerminar(false); };
   document.head.appendChild(s);
+}
+
+// O relatório pode ter dezenas de MB: a cada 5 min a página lê só a versão e
+// baixa os dados apenas quando eles mudaram (ou quando não há arquivo de versão).
+function lerDadosPasta(){
+  carregarScriptPasta(PASTA_ARQUIVO_VERSAO, temVersao=>{
+    if(temVersao && window.ENTREGAS_VERSAO && window.ENTREGAS_VERSAO === pastaUltimaGeracao) return; // nada novo
+    carregarScriptPasta(PASTA_ARQUIVO_DADOS, temDados=>{
+      if(!temDados) return; // sem arquivo de dados: segue com upload manual
+      const d = window.ENTREGAS_DADOS;
+      window.ENTREGAS_DADOS = null; // libera a memória do arquivo grande
+      aplicarDadosPasta(d);
+    });
+  });
 }
 
 function aplicarDadosPasta(d){
@@ -1480,7 +1495,7 @@ function aplicarDadosPasta(d){
     const gerado = new Date(d.geradoEm);
     const horas = (Date.now() - gerado.getTime()) / 3600000;
     const aviso = horas > 36 ? ` · ATENÇÃO: dados de ${gerado.toLocaleDateString("pt-BR")}, confira a atualização automática` : "";
-    els.footerInfo.textContent = `Fonte: ${d.arquivo || "SAP"} · Atualizado em ${gerado.toLocaleString("pt-BR")} · atualiza sozinho${aviso} · Apis Flora · build v38`;
+    els.footerInfo.textContent = `Fonte: ${d.arquivo || "SAP"} · Atualizado em ${gerado.toLocaleString("pt-BR")} · atualiza sozinho${aviso} · Apis Flora · build v39`;
     els.footerInfo.classList.toggle("aviso-dados", !!aviso);
   }catch(err){
     console.error("Falha ao ler os dados da pasta:", err);
