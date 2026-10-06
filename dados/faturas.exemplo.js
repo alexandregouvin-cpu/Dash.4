@@ -34,7 +34,10 @@
     { nome: "Expresso Serra Azul", cnpj: "08.365.217/0001-04", email: "financeiro@serraazul.exemplo", ciclo: 10, prazo: 15, base: 12800, ctes: 31, serie: "ESA" },
     { nome: "LogSul Rodoviário", cnpj: "31.904.558/0001-81", email: "faturas@logsul.exemplo", ciclo: 14, prazo: 28, base: 26900, ctes: 58, serie: "LS" },
     { nome: "Carga Certa Logística", cnpj: "19.227.140/0001-66", email: "contas@cargacerta.exemplo", ciclo: 30, prazo: 30, base: 63500, ctes: 140, serie: "CC" },
-    { nome: "Rápido Cerrado", cnpj: "27.558.391/0001-09", email: "adm@rapidocerrado.exemplo", ciclo: 7, prazo: 10, base: 7400, ctes: 19, serie: "RC" }
+    { nome: "Rápido Cerrado", cnpj: "27.558.391/0001-09", email: "adm@rapidocerrado.exemplo", ciclo: 7, prazo: 10, base: 7400, ctes: 19, serie: "RC" },
+    { nome: "Translitoral Express", cnpj: "14.603.278/0001-45", email: "faturamento@translitoral.exemplo", ciclo: 10, prazo: 20, base: 15600, ctes: 37, serie: "TLX" },
+    { nome: "Via Sul Cargas", cnpj: "35.120.946/0001-73", email: "cobranca@viasul.exemplo", ciclo: 14, prazo: 21, base: 9800, ctes: 24, serie: "VS" },
+    { nome: "Norte Minas Logística", cnpj: "22.871.530/0001-18", email: "financeiro@norteminas.exemplo", ciclo: 21, prazo: 28, base: 21300, ctes: 49, serie: "NML" }
   ];
 
   var faturas = [];
