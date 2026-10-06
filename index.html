@@ -486,7 +486,8 @@ body.tv .conferir .ver { display: none; }
     document.getElementById("aberto").innerHTML = "<small>R$</small>" + v[0] + '<span class="dec">,' + v[1] + "</span><em>mil</em>";
     document.getElementById("rot-aberto").textContent = estado.transp ? "Em aberto · " + estado.transp : "Em aberto";
     document.getElementById("filtro-ativo").innerHTML = estado.transp ? '<span class="filtro-ativo">' + esc(estado.transp) + ' <button type="button" id="limpa-transp" aria-label="Ver todas as transportadoras">×</button></span>' : "";
-    document.getElementById("semana").textContent = "R$ " + mil(soma(sem)) + " mil";
+    var vs = soma(sem);
+    document.getElementById("semana").textContent = vs >= 1000 ? "R$ " + mil(vs) + " mil" : brl.format(vs);
     document.getElementById("qtd").textContent = base.length;
     document.getElementById("qtd-t").textContent = new Set(base.map(function (f) { return f.transportadora; })).size;
 
@@ -572,8 +573,8 @@ body.tv .conferir .ver { display: none; }
     document.querySelector("#tabela tbody").innerHTML = linhas.length ? linhas.map(function (f) {
       var st = situacao(f), paga = st === "paga";
       return '<tr class="' + (paga ? "paga" : "") + '"><td><span class="st ' + st + '">' + HEXI + ROTULO[st] + "</span></td>" +
-        '<td><span class="quem">' + esc(f.transportadora) + '</span><span class="sub num">' + esc(f.cnpj || "") + "</span></td>" +
-        '<td class="num">' + esc(f.numero) + (f.confianca === "baixa" ? '<span class="alerta">conferir leitura</span>' : "") + "</td>" +
+        '<td><span class="quem"' + (f.razao_social ? ' title="' + esc(f.razao_social) + '"' : "") + ">" + esc(f.transportadora) + '</span><span class="sub num">' + esc(f.cnpj || "") + "</span></td>" +
+        '<td class="num">' + esc(f.numero) + (f.tipo === "reentrega_devolucao" ? '<span class="sub">reentrega / devolução</span>' : "") + (f.confianca === "baixa" ? '<span class="alerta">conferir leitura</span>' : "") + "</td>" +
         '<td class="num">' + (f.dEmissao ? dataLonga.format(f.dEmissao) : "—") + "</td>" +
         '<td class="num">' + (f.dVenc ? dataLonga.format(f.dVenc) : "—") + (paga ? "" : '<span class="sub">' + relativo(f) + "</span>") + "</td>" +
         '<td class="dir num">' + (f.qtd_ctes == null ? "—" : f.qtd_ctes) + "</td>" +

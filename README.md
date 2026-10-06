@@ -65,13 +65,20 @@ window.FATURAS_DADOS = {
 
 É um `.js` (e não `.json`) para funcionar abrindo o arquivo direto, sem servidor.
 
+## Coletor do Outlook
+
+A pasta `coletor/` tem o programa que lê os PDFs de fatura do Outlook com a API
+do Claude, confere vencimento e valor com o boleto e grava `dados/faturas.js`.
+Instalação e uso em [coletor/README.md](coletor/README.md).
+
+Campos extras que o coletor grava além dos do exemplo acima: `razao_social`,
+`cnpj_pagador` (unidade da empresa que paga), `tipo` (`frete` ou
+`reentrega_devolucao`), `linha_digitavel` e `copias` (quando a mesma fatura
+chegou mais de uma vez).
+
 ## Próximas etapas
 
-1. **Coletor Outlook (Python)**: ler uma pasta do Outlook, baixar os PDFs de
-   remetentes conhecidos e evitar reprocessar e-mails já lidos.
-2. **Extração com IA**: enviar cada PDF e receber os campos acima em JSON,
-   com validação (datas coerentes, valor > 0) e nível de confiança.
-3. **Agendamento e lembrete diário**: rodar todo dia pela manhã e enviar o
-   resumo de vencimentos por e-mail.
-4. **Cruzamento com o TMS** (opcional): marcar faturas pagas e apontar faturas
-   que chegaram por e-mail mas não constam no TMS.
+1. Instalar o coletor no computador com o Outlook e agendar a execução diária.
+2. Lembrete diário por e-mail com o resumo de vencimentos.
+3. Cruzamento com o TMS (opcional): marcar faturas pagas e apontar faturas que
+   chegaram por e-mail mas não constam no TMS.

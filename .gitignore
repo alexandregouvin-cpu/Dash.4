@@ -3,3 +3,7 @@ dados/faturas.js
 pdfs/
 __pycache__/
 .env
+coletor/config.json
+coletor/registro.json
+coletor/_temp/
+coletor/coletor.log

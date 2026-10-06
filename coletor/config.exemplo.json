@@ -1,0 +1,15 @@
+{
+  "outlook_conta": "",
+  "outlook_pasta": "Caixa de Entrada/Faturas Transportadoras",
+  "dias_retroativos": 45,
+  "remetentes_permitidos": [],
+  "cnpj_raiz_empresa": "49.345.358",
+  "pasta_pdfs": "../pdfs",
+  "arquivo_saida": "../dados/faturas.js",
+  "arquivo_registro": "registro.json",
+  "modelo": "claude-opus-5-5",
+  "esforco": "low",
+  "apelidos": {
+    "01.125.797": "Ativa"
+  }
+}
