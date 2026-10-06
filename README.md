@@ -9,8 +9,10 @@ vencimentos.
 
 Abra `index.html` no navegador (duplo clique). Não precisa de servidor.
 
-O visual segue a identidade Apis Flora em fundo branco: verde como tinta,
-amarelo como marca-texto e vermelho para o que venceu (logo em `assets/`).
+Painel de operação na identidade Apis Flora: coluna verde escura com relógio e
+os números principais, conteúdo em fundo claro. Tem **Modo Individual** (filtros,
+rolagem e livro completo) e **Modo TV** (tela única 1920×1080 que se ajusta à
+TV, com a fila paginada a cada 10 segundos), como no Mapa de Transportadoras.
 
 - Se existir `dados/faturas.js`, o painel mostra as faturas reais.
 - Se não existir, mostra os **dados de exemplo** de `dados/faturas.exemplo.js`
@@ -20,12 +22,12 @@ amarelo como marca-texto e vermelho para o que venceu (logo em `assets/`).
 
 | Bloco | Conteúdo |
 |---|---|
-| Resumo | Um parágrafo com o total em aberto, o vencido e o que vence em 7 dias; botão **Copiar resumo para e-mail** |
-| Régua de vencimentos | Cada fatura vira células de favo empilhadas no dia em que vence (cada célula vale um valor fixo, indicado na legenda); clique numa fatura para ver o dia no livro |
-| Agenda de pagamentos | Vencidas e próximos 21 dias, dia a dia |
+| Coluna verde | Relógio, total em aberto, vencidas e o que vence em 7 dias |
+| Próximos 14 dias | Valor e quantidade por dia de vencimento (em R$ mil), com as vencidas à esquerda; clique num dia para filtrar a fila |
+| Fila de pagamentos | Faturas em aberto por data de vencimento, com a situação em destaque |
 | Por transportadora | Em aberto e vencido por transportadora; clique para filtrar |
-| Para conferir | Duplicidade (mesmo CNPJ + número), leitura com baixa confiança, campos faltando, prazo menor que 5 dias, vencimento antes da emissão |
-| Livro de faturas | Todas as faturas, ordenável, com link para o PDF e marcação de "paga" |
+| Conferir | Faixa com duplicidades, leituras com baixa confiança, campos faltando e prazos curtos, alternando a cada 7 segundos |
+| Livro de faturas | Só no Modo Individual: todas as faturas, ordenável, com link para o PDF e marcação de "paga"; botão **Copiar resumo** para e-mail ou Teams |
 
 "Marcar como paga" fica salvo só no navegador de quem marcou. Quando o coletor
 souber a situação de pagamento (por exemplo, cruzando com um relatório do TMS),
