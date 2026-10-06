@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conceitos Visuais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Archivo:wdth,wght@62..125,400..900&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Três direções visuais para o painel de faturas, todas a partir da logo Apis Flora
+   (favo amarelo, hexágono vermelho no centro, letras verdes). Cada tela é um palco 1600×900 escalado.
+   A barra de escolha é neutra de propósito, para não competir com os conceitos. */
+:root {
+  color-scheme: dark;
+  --barra: #141615; --barra-tinta: #E8EBE9; --barra-2: #9AA29E;
+  --verde-0: #021D14; --verde-1: #032F21; --verde-2: #0B4A36; --verde-3: #1F7A55;
+  --menta: #9BF0C3; --mel: #FAEB0A; --vermelho: #C00812; --vermelho-2: #E8434F;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #0C0E0D; color: var(--barra-tinta); font: 400 14px/1.45 "Manrope", system-ui, sans-serif; }
+.escolha { padding: 18px 20px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; background: var(--barra); border-bottom: 1px solid #262A28; }
+.escolha h1 { margin: 0; font: 600 15px/1.2 "Manrope", sans-serif; letter-spacing: .02em; }
+.escolha p { margin: 0; color: var(--barra-2); font-size: 13px; flex: 1 1 320px; min-width: 0; }
+.abas { display: flex; gap: 6px; flex-wrap: wrap; }
+.abas button { border: 1px solid #333836; background: transparent; color: var(--barra-tinta); padding: 8px 14px; border-radius: 999px; cursor: pointer; font: 600 13px/1 "Manrope", sans-serif; }
+.abas button:hover { border-color: #6E7672; }
+.abas button[aria-selected="true"] { background: var(--barra-tinta); color: #111; border-color: var(--barra-tinta); }
+.abas button:focus-visible { outline: 2px solid var(--mel); outline-offset: 2px; }
+.legenda-conceito { padding: 12px 20px 0; color: var(--barra-2); font-size: 13px; max-width: 900px; }
+.legenda-conceito b { color: var(--barra-tinta); }
+.moldura { padding: 14px 20px 28px; }
+.janela { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.5); max-width: 100%; }
+.tela { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; overflow: hidden; }
+.tela[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* =========================================================
+   Conceito 1 · FAVO — a logo vira o painel: o hexágono vermelho
+   do centro são as vencidas, os seis amarelos em volta são as transportadoras.
+   ========================================================= */
+.favo { background: radial-gradient(ellipse 60% 70% at 32% 52%, #0B3A2A 0%, #04170F 58%, #020E09 100%); color: #FFFFFF; font-family: "Poppins", sans-serif; }
+.favo::before {
+  content: ""; position: absolute; inset: 0; opacity: .5; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='146'%3E%3Cpath d='M42 0L84 24V73L42 97L0 73V24Z M42 97V146' fill='none' stroke='%239BF0C3' stroke-opacity='.06' stroke-width='1.2'/%3E%3C/svg%3E");
+}
+.favo .cab { position: absolute; left: 64px; top: 52px; right: 64px; display: flex; justify-content: space-between; align-items: center; }
+.favo .cab img { height: 70px; }
+.favo .cab .t { text-align: right; }
+.favo .cab .t b { display: block; font-size: 15px; letter-spacing: .32em; text-transform: uppercase; color: var(--menta); font-weight: 600; }
+.favo .cab .t span { font-size: 15px; color: #BFEFDA; }
+.favo svg.flor { position: absolute; left: 40px; top: 150px; width: 760px; height: 700px; overflow: visible; }
+.favo .flor text { font-family: "Poppins", sans-serif; }
+.favo .lado { position: absolute; left: 860px; top: 170px; width: 676px; }
+.favo .rot { font-size: 14px; letter-spacing: .28em; text-transform: uppercase; color: var(--menta); font-weight: 600; }
+.favo .grande { font-size: 132px; font-weight: 700; line-height: .95; letter-spacing: -0.045em; margin-top: 8px; }
+.favo .grande small { font-size: 34px; font-weight: 500; letter-spacing: 0; color: #BFEFDA; margin-right: 10px; vertical-align: 70px; }
+.favo .grande em { font-style: normal; font-size: 48px; font-weight: 600; letter-spacing: -0.02em; margin-left: 10px; color: #BFEFDA; }
+.favo .pares { display: flex; gap: 44px; margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(155,240,195,.18); }
+.favo .pares div { display: grid; gap: 2px; }
+.favo .pares b { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; }
+.favo .pares .mel b { color: var(--mel); }
+.favo .pares span { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: #BFEFDA; font-weight: 500; }
+.favo .prox { margin-top: 34px; display: grid; gap: 0; }
+.favo .prox .linha { display: grid; grid-template-columns: 92px 1fr auto; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.07); }
+.favo .prox .linha:first-child { border-top: 0; }
+.favo .prox .d { color: var(--mel); font-weight: 700; font-size: 20px; }
+.favo .prox .d.v { color: var(--vermelho-2); }
+.favo .prox .n { font-size: 19px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.favo .prox .n small { color: #8FC7AE; font-size: 14px; margin-left: 8px; }
+.favo .prox .vl { font-size: 20px; font-weight: 600; }
+.favo .rodape { position: absolute; left: 64px; right: 64px; bottom: 40px; display: flex; justify-content: space-between; font-size: 13px; color: #6FA58D; letter-spacing: .08em; }
+
+/* =========================================================
+   Conceito 2 · PÔSTER — branco, tipografia gigante e formas da logo
+   como blocos de cor; faixa corrida com os próximos pagamentos.
+   ========================================================= */
+.poster { background: #FFFFFF; color: #0B2A20; font-family: "Archivo", sans-serif; }
+.poster .cab { position: absolute; left: 70px; right: 70px; top: 48px; display: flex; justify-content: space-between; align-items: center; }
+.poster .cab img { height: 62px; }
+.poster .cab .d { font-stretch: 75%; font-weight: 800; font-size: 26px; letter-spacing: .04em; text-transform: uppercase; }
+.poster .cab .d span { color: var(--vermelho); }
+.poster .num { position: absolute; left: 62px; top: 168px; }
+.poster .num .rot { font-stretch: 100%; font-weight: 700; font-size: 18px; letter-spacing: .3em; text-transform: uppercase; color: #1F7A55; margin-left: 10px; }
+.poster .num .valor { font-stretch: 62%; font-weight: 900; font-size: 330px; line-height: .82; letter-spacing: -0.035em; color: #0B4A36; display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; }
+.poster .num .valor .unid { display: grid; gap: 6px; padding-top: 26px; font-size: 64px; line-height: .9; letter-spacing: 0; font-stretch: 75%; }
+.poster .num .valor .unid i { font-style: normal; color: #1F7A55; }
+.poster .num .sub { margin: 18px 0 0 10px; font-size: 22px; font-weight: 500; font-stretch: 90%; color: #4B6358; }
+.poster .lista { position: absolute; left: 70px; top: 650px; width: 780px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 48px; }
+.poster .lista div { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-stretch: 85%; }
+.poster .lista b { font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.poster .lista span { font-size: 19px; font-weight: 600; color: #0B4A36; }
+.poster .lista i { grid-column: 1 / -1; height: 5px; background: #EEF2F0; position: relative; }
+.poster .lista i u { position: absolute; left: 0; top: 0; bottom: 0; background: #0B4A36; text-decoration: none; }
+.poster .lista i s { position: absolute; left: 0; top: 0; bottom: 0; background: var(--vermelho); text-decoration: none; }
+.poster svg.formas { position: absolute; right: -40px; top: 92px; width: 760px; height: 720px; overflow: visible; }
+.poster .formas text { font-family: "Archivo", sans-serif; }
+.poster .faixa { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; background: #0B4A36; color: #FFFFFF; overflow: hidden; display: flex; align-items: center; }
+.poster .faixa .trilho { display: flex; gap: 56px; white-space: nowrap; animation: correr 46s linear infinite; padding-left: 40px; font-stretch: 80%; font-weight: 700; font-size: 26px; text-transform: uppercase; letter-spacing: .02em; }
+.poster .faixa .trilho span b { color: var(--mel); margin-right: 14px; }
+.poster .faixa .trilho span.v b { color: #FF8A91; }
+.poster .faixa .trilho span::after { content: "⬢"; color: var(--mel); margin-left: 56px; font-size: 18px; vertical-align: 4px; }
+@keyframes correr { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* =========================================================
+   Conceito 3 · AURORA — verde profundo com brilhos nas cores da logo,
+   painéis de vidro e gráficos suaves, com cara de aplicativo.
+   ========================================================= */
+.aurora { background: #01140D; color: #FFFFFF; font-family: "Manrope", sans-serif; }
+.aurora .luz { position: absolute; border-radius: 50%; filter: blur(110px); pointer-events: none; }
+.aurora .luz.a { width: 620px; height: 620px; right: -120px; top: -200px; background: rgba(250,235,10,.30); }
+.aurora .luz.b { width: 560px; height: 560px; left: -160px; bottom: -260px; background: rgba(192,8,18,.38); }
+.aurora .luz.c { width: 700px; height: 520px; left: 420px; top: 260px; background: rgba(31,122,85,.45); }
+.aurora .cab { position: absolute; left: 56px; right: 56px; top: 40px; display: flex; align-items: center; justify-content: space-between; }
+.aurora .cab .marca { display: flex; align-items: center; gap: 22px; }
+.aurora .cab img { height: 60px; }
+.aurora .cab h2 { margin: 0; font: 600 30px/1.1 "Poppins", sans-serif; letter-spacing: -0.02em; }
+.aurora .cab h2 span { display: block; font: 500 15px/1.4 "Manrope", sans-serif; color: rgba(255,255,255,.6); letter-spacing: 0; }
+.aurora .pilula { padding: 10px 18px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(14px); font-weight: 600; font-size: 15px; display: flex; gap: 10px; align-items: center; }
+.aurora .pilula i { width: 8px; height: 8px; border-radius: 50%; background: var(--menta); box-shadow: 0 0 12px var(--menta); }
+.aurora .vidro { position: absolute; border-radius: 28px; background: linear-gradient(150deg, rgba(255,255,255,.10), rgba(255,255,255,.035)); border: 1px solid rgba(255,255,255,.13); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 30px 60px rgba(0,0,0,.25); padding: 30px 34px; }
+.aurora svg text { font-family: "Poppins", "Segoe UI", sans-serif; }
+.aurora .rot { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.62); letter-spacing: .02em; }
+.aurora .v1 { left: 56px; top: 140px; width: 560px; height: 700px; }
+.aurora .v1 .grande { font: 700 92px/1 "Poppins", sans-serif; letter-spacing: -0.04em; margin-top: 8px; }
+.aurora .v1 .grande small { font-size: 30px; font-weight: 500; color: rgba(255,255,255,.6); margin-right: 8px; letter-spacing: 0; }
+.aurora .v1 .grande em { font-style: normal; font-size: 40px; color: rgba(255,255,255,.7); margin-left: 8px; letter-spacing: -0.01em; }
+.aurora .v1 svg { display: block; margin: 26px auto 0; }
+.aurora .v1 .partes { display: grid; gap: 14px; margin-top: 24px; }
+.aurora .v1 .partes div { display: grid; grid-template-columns: 14px 1fr auto; gap: 12px; align-items: center; font-size: 17px; }
+.aurora .v1 .partes i { width: 14px; height: 14px; border-radius: 5px; }
+.aurora .v1 .partes b { font: 600 19px/1 "Poppins", sans-serif; }
+.aurora .v2 { left: 640px; top: 140px; width: 904px; height: 330px; }
+.aurora .v2 svg { position: absolute; left: 34px; right: 34px; bottom: 26px; }
+.aurora .v2 .topo2 { display: flex; justify-content: space-between; align-items: baseline; }
+.aurora .v2 .topo2 b { font: 600 26px/1 "Poppins", sans-serif; }
+.aurora .v3 { left: 640px; top: 494px; width: 440px; height: 346px; }
+.aurora .v3 .linha { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; margin-top: 16px; }
+.aurora .v3 .linha b { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aurora .v3 .linha span { font: 600 16px/1 "Poppins", sans-serif; }
+.aurora .v3 .linha i { grid-column: 1 / -1; height: 8px; border-radius: 8px; background: rgba(255,255,255,.08); overflow: hidden; display: flex; gap: 2px; }
+.aurora .v3 .linha i u { background: var(--vermelho-2); border-radius: 8px; }
+.aurora .v3 .linha i s { background: linear-gradient(90deg, #1F7A55, #9BF0C3); border-radius: 8px; }
+.aurora .v4 { left: 1104px; top: 494px; width: 440px; height: 346px; background: linear-gradient(150deg, rgba(250,235,10,.22), rgba(250,235,10,.05)); border-color: rgba(250,235,10,.35); }
+.aurora .v4 .quando { margin-top: 18px; font: 700 64px/1 "Poppins", sans-serif; letter-spacing: -0.03em; color: var(--mel); }
+.aurora .v4 .quando span { font-size: 24px; font-weight: 500; color: rgba(255,255,255,.75); letter-spacing: 0; margin-left: 6px; }
+.aurora .v4 .quem { margin-top: 18px; font: 600 24px/1.2 "Poppins", sans-serif; }
+.aurora .v4 .det { margin-top: 6px; color: rgba(255,255,255,.65); font-size: 16px; }
+.aurora .v4 .vl { position: absolute; left: 34px; bottom: 30px; font: 700 34px/1 "Poppins", sans-serif; }
+</style>
+</head>
+<body>
+<header class="escolha">
+  <h1>Conceitos visuais · Faturas de Frete</h1>
+  <p>Três direções diferentes, todas a partir da logo. Escolha uma e o painel completo é construído nela.</p>
+  <div class="abas" role="tablist" aria-label="Conceitos">
+    <button type="button" role="tab" data-c="favo" aria-selected="true">1 · Favo</button>
+    <button type="button" role="tab" data-c="poster" aria-selected="false">2 · Pôster</button>
+    <button type="button" role="tab" data-c="aurora" aria-selected="false">3 · Aurora</button>
+  </div>
+</header>
+<p class="legenda-conceito" id="legenda"></p>
+<div class="moldura">
+  <div class="janela" id="janela">
+    <!-- Conceito 1 -->
+    <section class="tela favo" data-tela="favo" aria-label="Conceito Favo">
+      <div class="cab">
+        <img src="assets/logo-apis-flora.png" alt="Apis Flora">
+        <div class="t"><b>Faturas de frete</b><span data-campo="data"></span></div>
+      </div>
+      <svg class="flor" id="flor" viewBox="0 0 760 700" aria-label="Favo: vencidas no centro e transportadoras em volta"></svg>
+      <div class="lado">
+        <div class="rot">Em aberto</div>
+        <div class="grande" data-campo="aberto-grande"></div>
+        <div class="pares">
+          <div class="mel"><b data-campo="semana"></b><span>Vence em 7 dias</span></div>
+          <div><b data-campo="qtd"></b><span>Faturas</span></div>
+          <div><b data-campo="transps"></b><span>Transportadoras</span></div>
+        </div>
+        <div class="prox" id="favo-prox"></div>
+      </div>
+      <div class="rodape"><span>APIS FLORA · LOGÍSTICA</span><span data-campo="atualizado"></span></div>
+    </section>
+
+    <!-- Conceito 2 -->
+    <section class="tela poster" data-tela="poster" aria-label="Conceito Pôster" hidden>
+      <div class="cab">
+        <img src="assets/logo-apis-flora-escura.png" alt="Apis Flora">
+        <div class="d" data-campo="data-poster"></div>
+      </div>
+      <div class="num">
+        <div class="rot">Em aberto · faturas de frete</div>
+        <div class="valor" data-campo="aberto-poster"></div>
+        <div class="sub" data-campo="sub-poster"></div>
+      </div>
+      <div class="lista" id="poster-lista"></div>
+      <svg class="formas" id="formas" viewBox="0 0 760 720" aria-label="Vencidas e próximos 7 dias"></svg>
+      <div class="faixa"><div class="trilho" id="trilho"></div></div>
+    </section>
+
+    <!-- Conceito 3 -->
+    <section class="tela aurora" data-tela="aurora" aria-label="Conceito Aurora" hidden>
+      <span class="luz a"></span><span class="luz b"></span><span class="luz c"></span>
+      <div class="cab">
+        <div class="marca"><img src="assets/logo-apis-flora.png" alt="Apis Flora"><h2>Faturas de frete<span data-campo="data"></span></h2></div>
+        <div class="pilula"><i></i><span data-campo="atualizado"></span></div>
+      </div>
+      <div class="vidro v1">
+        <div class="rot">Total em aberto</div>
+        <div class="grande" data-campo="aberto-grande"></div>
+        <svg id="anel" width="300" height="300" viewBox="0 0 300 300" aria-label="Divisão do valor em aberto"></svg>
+        <div class="partes" id="partes"></div>
+      </div>
+      <div class="vidro v2">
+        <div class="topo2"><span class="rot">Próximos 30 dias</span><b data-campo="mes-total"></b></div>
+        <svg id="onda" width="836" height="210" viewBox="0 0 836 210" aria-label="Valor a vencer por dia nos próximos 30 dias"></svg>
+      </div>
+      <div class="vidro v3">
+        <div class="rot">Por transportadora</div>
+        <div id="aurora-transp"></div>
+      </div>
+      <div class="vidro v4">
+        <div class="rot">Próximo pagamento</div>
+        <div class="quando" data-campo="prox-quando"></div>
+        <div class="quem" data-campo="prox-quem"></div>
+        <div class="det" data-campo="prox-det"></div>
+        <div class="vl" data-campo="prox-vl"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="dados/faturas.exemplo.js"></script>
+<script src="dados/faturas.js"></script>
+<script>
+(function () {
+  "use strict";
+  var DIA = 86400000;
+  var fonte = window.FATURAS_DADOS || window.FATURAS_EXEMPLO || { faturas: [] };
+  var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var dc = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" });
+  function p(s) { if (!s) return null; var a = String(s).slice(0, 10).split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  function dia0(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function diff(a, b) { return Math.round((dia0(a) - dia0(b)) / DIA); }
+  function soma(l) { return l.reduce(function (s, f) { return s + f.valor; }, 0); }
+  function mil(v, casas) { return (v / 1e3).toLocaleString("pt-BR", { minimumFractionDigits: casas == null ? 1 : casas, maximumFractionDigits: casas == null ? 1 : casas }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function rel(d) { var n = diff(d, hoje); return n === 0 ? "hoje" : n === 1 ? "amanhã" : n === -1 ? "ontem" : n > 0 ? "em " + n + " dias" : "há " + (-n) + " dias"; }
+
+  var hoje = dia0(new Date());
+  var todas = (fonte.faturas || []).map(function (f) { return Object.assign({}, f, { valor: +f.valor || 0, dV: p(f.vencimento) }); });
+  var abertas = todas.filter(function (f) { return !f.pago && f.dV; });
+  var venc = abertas.filter(function (f) { return f.dV < hoje; });
+  var semana = abertas.filter(function (f) { var n = diff(f.dV, hoje); return n >= 0 && n <= 7; });
+  var depois = abertas.filter(function (f) { return diff(f.dV, hoje) > 7; });
+  var porT = {};
+  abertas.forEach(function (f) {
+    var t = porT[f.transportadora] = porT[f.transportadora] || { nome: f.transportadora, total: 0, venc: 0, n: 0 };
+    t.total += f.valor; t.n++; if (f.dV < hoje) t.venc += f.valor;
+  });
+  var transps = Object.keys(porT).map(function (k) { return porT[k]; }).sort(function (a, b) { return b.total - a.total; });
+  var futuras = abertas.filter(function (f) { return f.dV >= hoje; }).sort(function (a, b) { return a.dV - b.dV || b.valor - a.valor; });
+  var maxT = Math.max.apply(null, transps.map(function (t) { return t.total; }).concat([1]));
+
+  var dataTxt = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(hoje);
+  dataTxt = dataTxt.charAt(0).toUpperCase() + dataTxt.slice(1);
+  var ger = fonte.gerado_em ? new Date(fonte.gerado_em) : new Date();
+  var atualizado = "Atualizado às " + ger.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + (window.FATURAS_DADOS ? "" : " · dados de exemplo");
+  function preencher(campo, html) { document.querySelectorAll('[data-campo="' + campo + '"]').forEach(function (el) { el.innerHTML = html; }); }
+  preencher("data", esc(dataTxt));
+  preencher("atualizado", esc(atualizado));
+  var aberto = soma(abertas);
+  preencher("aberto-grande", "<small>R$</small>" + mil(aberto).split(",")[0] + '<span style="font-size:.55em">,' + mil(aberto).split(",")[1] + "</span><em>mil</em>");
+  preencher("semana", "R$ " + mil(soma(semana)) + " mil");
+  preencher("qtd", abertas.length);
+  preencher("transps", transps.length);
+
+  function hex(cx, cy, r) {
+    var pts = [];
+    for (var k = 0; k < 6; k++) { var a = Math.PI / 180 * (60 * k - 30); pts.push((cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1)); }
+    return pts.join(" ");
+  }
+  function quebra(nome, max) {
+    var pal = nome.split(" "), l1 = "", l2 = "";
+    pal.forEach(function (w) { if (!l2 && (l1 + " " + w).trim().length <= max) l1 = (l1 + " " + w).trim(); else l2 = (l2 + " " + w).trim(); });
+    return [l1, l2];
+  }
+
+  // ---------- 1 · Favo ----------
+  (function () {
+    var r = 128, cx = 380, cy = 350, d = Math.sqrt(3) * r;
+    var s = '<defs><radialGradient id="brilho"><stop offset="0" stop-color="#FAEB0A" stop-opacity=".22"/><stop offset="1" stop-color="#FAEB0A" stop-opacity="0"/></radialGradient></defs>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="360" fill="url(#brilho)"/>';
+    // vizinhos na ordem da logo: em cima à esquerda, em cima à direita, direita, embaixo à direita, embaixo à esquerda, esquerda
+    var ang = [240, 300, 0, 60, 120, 180];
+    ang.forEach(function (g, i) {
+      var t = transps[i];
+      var x = cx + d * Math.cos(g * Math.PI / 180), y = cy + d * Math.sin(g * Math.PI / 180);
+      if (!t) { s += '<polygon points="' + hex(x, y, r - 7) + '" fill="none" stroke="#FAEB0A" stroke-opacity=".25" stroke-width="2"/>'; return; }
+      s += '<polygon points="' + hex(x, y, r - 7) + '" fill="#FAEB0A"/>';
+      var linhas = quebra(t.nome, 15);
+      s += '<text x="' + x + '" y="' + (y - 34) + '" text-anchor="middle" fill="#0B2A20" font-size="17" font-weight="600">' + esc(linhas[0]) + "</text>";
+      if (linhas[1]) s += '<text x="' + x + '" y="' + (y - 13) + '" text-anchor="middle" fill="#0B2A20" font-size="17" font-weight="600">' + esc(linhas[1]) + "</text>";
+      s += '<text x="' + x + '" y="' + (y + 26) + '" text-anchor="middle" fill="#0B2A20" font-size="30" font-weight="800" letter-spacing="-1">' + mil(t.total) + '<tspan font-size="16" font-weight="600" dx="4">mil</tspan></text>';
+      if (t.venc) s += '<rect x="' + (x - 58) + '" y="' + (y + 44) + '" width="116" height="26" rx="13" fill="#C00812"/><text x="' + x + '" y="' + (y + 62) + '" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="600">' + mil(t.venc) + " mil vencido</text>";
+      else s += '<text x="' + x + '" y="' + (y + 62) + '" text-anchor="middle" fill="#0B4A36" font-size="13" font-weight="600">em dia</text>';
+    });
+    s += '<polygon points="' + hex(cx, cy, r - 7) + '" fill="#C00812"/>';
+    s += '<polygon points="' + hex(cx, cy, r - 18) + '" fill="none" stroke="#FFFFFF" stroke-opacity=".18" stroke-width="1.5"/>';
+    s += '<text x="' + cx + '" y="' + (cy - 38) + '" text-anchor="middle" fill="#FFD9DC" font-size="14" font-weight="600" letter-spacing="4">VENCIDAS</text>';
+    s += '<text x="' + cx + '" y="' + (cy + 14) + '" text-anchor="middle" fill="#FFFFFF" font-size="46" font-weight="800" letter-spacing="-1.5">' + mil(soma(venc)) + "</text>";
+    s += '<text x="' + cx + '" y="' + (cy + 44) + '" text-anchor="middle" fill="#FFD9DC" font-size="16" font-weight="500">mil · ' + venc.length + " faturas</text>";
+    document.getElementById("flor").innerHTML = s;
+    var lista = venc.slice().sort(function (a, b) { return a.dV - b.dV; }).slice(0, 1).concat(futuras.slice(0, 4));
+    document.getElementById("favo-prox").innerHTML = lista.map(function (f) {
+      var v = f.dV < hoje;
+      return '<div class="linha"><span class="d' + (v ? " v" : "") + '">' + dc.format(f.dV) + '</span><span class="n">' + esc(f.transportadora) + "<small>" + rel(f.dV) + '</small></span><span class="vl">' + brl.format(f.valor) + "</span></div>";
+    }).join("");
+  })();
+
+  // ---------- 2 · Pôster ----------
+  (function () {
+    var sem = new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(hoje).replace(".", "");
+    preencher("data-poster", sem + " <span>" + String(hoje.getDate()).padStart(2, "0") + "." + String(hoje.getMonth() + 1).padStart(2, "0") + "</span>." + hoje.getFullYear());
+    var m = mil(aberto, 1).split(",");
+    preencher("aberto-poster", m[0] + '<span class="unid"><i>,' + m[1] + "</i>MIL<br>R$</span>");
+    preencher("sub-poster", abertas.length + " faturas de " + transps.length + " transportadoras");
+    document.getElementById("poster-lista").innerHTML = transps.slice(0, 6).map(function (t) {
+      return "<div><b>" + esc(t.nome) + "</b><span>" + mil(t.total) + ' mil</span><i><u style="width:' + (t.total / maxT * 100) + '%"></u><s style="width:' + (t.venc / maxT * 100) + '%"></s></i></div>';
+    }).join("");
+    // grande hexágono amarelo (7 dias) com o vermelho (vencidas) encaixado, como na logo
+    var s = "";
+    s += '<polygon points="' + hex(420, 330, 330) + '" fill="#FAEB0A"/>';
+    s += '<text x="420" y="196" text-anchor="middle" fill="#0B2A20" font-size="20" font-weight="700" letter-spacing="6" font-stretch="100%">VENCE EM 7 DIAS</text>';
+    s += '<text x="420" y="330" text-anchor="middle" fill="#0B2A20" font-size="150" font-weight="900" font-stretch="62%" letter-spacing="-4">' + mil(soma(semana)) + "</text>";
+    s += '<text x="420" y="384" text-anchor="middle" fill="#0B2A20" font-size="28" font-weight="700" font-stretch="75%" letter-spacing="2">MIL · ' + semana.length + " FATURAS</text>";
+    s += '<polygon points="' + hex(170, 560, 150) + '" fill="#C00812"/>';
+    s += '<text x="170" y="510" text-anchor="middle" fill="#FFD9DC" font-size="16" font-weight="700" letter-spacing="5">VENCIDO</text>';
+    s += '<text x="170" y="585" text-anchor="middle" fill="#FFFFFF" font-size="84" font-weight="900" font-stretch="62%" letter-spacing="-2">' + mil(soma(venc)) + "</text>";
+    s += '<text x="170" y="620" text-anchor="middle" fill="#FFD9DC" font-size="20" font-weight="700" font-stretch="75%" letter-spacing="1">MIL · ' + venc.length + " FATURAS</text>";
+    document.getElementById("formas").innerHTML = s;
+    var itens = venc.slice().sort(function (a, b) { return a.dV - b.dV; }).map(function (f) { return '<span class="v"><b>' + dc.format(f.dV) + " vencida</b>" + esc(f.transportadora) + " · " + brl.format(f.valor) + "</span>"; })
+      .concat(futuras.slice(0, 10).map(function (f) { return "<span><b>" + dc.format(f.dV) + "</b>" + esc(f.transportadora) + " · " + brl.format(f.valor) + "</span>"; }));
+    document.getElementById("trilho").innerHTML = itens.join("") + itens.join("");
+  })();
+
+  // ---------- 3 · Aurora ----------
+  (function () {
+    var partes = [
+      { nome: "Vencido", v: soma(venc), cor: "#E8434F" },
+      { nome: "Vence em 7 dias", v: soma(semana), cor: "#FAEB0A" },
+      { nome: "Depois", v: soma(depois), cor: "#9BF0C3" }
+    ];
+    var total = partes.reduce(function (s, x) { return s + x.v; }, 0) || 1;
+    var R = 118, C = 2 * Math.PI * R, ini = 0, s = '<circle cx="150" cy="150" r="' + R + '" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="26"/>';
+    partes.forEach(function (x) {
+      var len = x.v / total * C;
+      if (len > 0) s += '<circle cx="150" cy="150" r="' + R + '" fill="none" stroke="' + x.cor + '" stroke-width="26" stroke-dasharray="' + Math.max(0, len - 6).toFixed(1) + " " + C.toFixed(1) + '" stroke-dashoffset="' + (-ini).toFixed(1) + '" transform="rotate(-90 150 150)" stroke-linecap="round"/>';
+      ini += len;
+    });
+    s += '<text x="150" y="140" text-anchor="middle" fill="rgba(255,255,255,.6)" font-family="Manrope" font-size="15" font-weight="600">vencido</text>';
+    s += '<text x="150" y="182" text-anchor="middle" fill="#FFFFFF" font-family="Poppins" font-size="44" font-weight="700">' + Math.round(partes[0].v / total * 100) + "%</text>";
+    document.getElementById("anel").innerHTML = s;
+    document.getElementById("partes").innerHTML = partes.map(function (x) { return '<div><i style="background:' + x.cor + '"></i><span>' + x.nome + "</span><b>R$ " + mil(x.v) + " mil</b></div>"; }).join("");
+
+    // onda dos próximos 30 dias
+    var W = 836, H = 210, n = 30, vals = [];
+    for (var i = 0; i < n; i++) { var d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i); vals.push(soma(abertas.filter(function (f) { return +f.dV === +d; }))); }
+    var suave = vals;
+    var mx = Math.max.apply(null, vals.concat([1]));
+    function X(i) { return 10 + i * (W - 20) / (n - 1); }
+    function Y(v) { return H - 30 - v / mx * (H - 60); }
+    var path = "M" + X(0) + "," + Y(suave[0]);
+    for (i = 1; i < n; i++) { var xm = (X(i - 1) + X(i)) / 2; path += " C" + xm + "," + Y(suave[i - 1]) + " " + xm + "," + Y(suave[i]) + " " + X(i) + "," + Y(suave[i]); }
+    var o = '<defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#9BF0C3" stop-opacity=".45"/><stop offset="1" stop-color="#9BF0C3" stop-opacity="0"/></linearGradient></defs>';
+    o += '<rect x="' + X(0) + '" y="0" width="' + (X(7) - X(0)) + '" height="' + (H - 30) + '" rx="12" fill="rgba(250,235,10,.08)"/>';
+    o += '<text x="' + (X(0) + 10) + '" y="18" fill="#FAEB0A" font-family="Manrope" font-size="13" font-weight="700">7 dias</text>';
+    o += '<path d="' + path + " L" + X(n - 1) + "," + (H - 30) + " L" + X(0) + "," + (H - 30) + 'Z" fill="url(#g)"/>';
+    o += '<path d="' + path + '" fill="none" stroke="#9BF0C3" stroke-width="3"/>';
+    vals.forEach(function (v, i) {
+      if (!v) return;
+      var cor = i <= 7 ? "#FAEB0A" : "#9BF0C3";
+      o += '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="6" fill="' + cor + '" stroke="#01140D" stroke-width="3"/>';
+      if (v === mx || i <= 7) o += '<text x="' + X(i) + '" y="' + (Y(v) - 14) + '" text-anchor="middle" fill="#FFFFFF" font-family="Poppins" font-size="14" font-weight="600">' + mil(v, 0) + " mil</text>";
+    });
+    [0, 7, 14, 21, 29].forEach(function (i) {
+      var d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i);
+      o += '<text x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="' + (i === 0 ? "start" : i === 29 ? "end" : "middle") + '" fill="rgba(255,255,255,.5)" font-family="Manrope" font-size="13" font-weight="600">' + (i === 0 ? "Hoje" : dc.format(d)) + "</text>";
+    });
+    document.getElementById("onda").innerHTML = o;
+    preencher("mes-total", "R$ " + mil(vals.reduce(function (a, b) { return a + b; }, 0)) + " mil");
+
+    document.getElementById("aurora-transp").innerHTML = transps.slice(0, 5).map(function (t) {
+      return '<div class="linha"><b>' + esc(t.nome) + "</b><span>" + mil(t.total) + ' mil</span><i>' + (t.venc ? '<u style="width:' + (t.venc / maxT * 100) + '%"></u>' : "") + '<s style="width:' + ((t.total - t.venc) / maxT * 100) + '%"></s></i></div>';
+    }).join("");
+
+    var px = futuras[0];
+    if (px) {
+      var nd = diff(px.dV, hoje);
+      preencher("prox-quando", nd === 0 ? "Hoje" : nd + "<span>" + (nd === 1 ? "dia" : "dias") + "</span>");
+      preencher("prox-quem", esc(px.transportadora));
+      preencher("prox-det", "Fatura " + esc(px.numero) + " · vence " + dc.format(px.dV));
+      preencher("prox-vl", brl.format(px.valor));
+    }
+  })();
+
+  // ---------- Abas e escala ----------
+  var LEG = {
+    favo: "<b>Favo.</b> A própria logo vira o painel: o hexágono vermelho do centro mostra as vencidas e os seis amarelos em volta são as transportadoras, com o valor em aberto e o vencido de cada uma. Fundo verde quase preto e números grandes ao lado.",
+    poster: "<b>Pôster.</b> Fundo branco, tipografia gigante e as formas da logo como blocos de cor: o hexágono amarelo é o que vence na semana e o vermelho encaixado são as vencidas. Uma faixa verde corre embaixo com os próximos pagamentos.",
+    aurora: "<b>Aurora.</b> Verde profundo com brilhos suaves no amarelo e no vermelho da logo, painéis de vidro e gráficos arredondados, com cara de aplicativo moderno."
+  };
+  var janela = document.getElementById("janela");
+  function escala() {
+    var k = janela.clientWidth / 1600;
+    document.querySelectorAll(".tela").forEach(function (t) { t.style.transform = "scale(" + k + ")"; });
+  }
+  function abrir(c) {
+    document.querySelectorAll(".tela").forEach(function (t) { t.hidden = t.dataset.tela !== c; });
+    document.querySelectorAll(".abas button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.c === c ? "true" : "false"); });
+    document.getElementById("legenda").innerHTML = LEG[c];
+  }
+  document.querySelector(".abas").addEventListener("click", function (e) { var b = e.target.closest("[data-c]"); if (b) abrir(b.dataset.c); });
+  window.addEventListener("resize", escala);
+  escala();
+  abrir("favo");
+})();
+</script>
+</body>
+</html>
