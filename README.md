@@ -9,8 +9,8 @@ vencimentos.
 
 Abra `index.html` no navegador (duplo clique). Não precisa de servidor.
 
-O visual segue a identidade Apis Flora usada no Mapa de Transportadoras
-(verde profundo, menta, amarelo, Poppins + Inter, logo em `assets/`).
+O visual segue a identidade Apis Flora em fundo branco: verde como tinta,
+amarelo como marca-texto e vermelho para o que venceu (logo em `assets/`).
 
 - Se existir `dados/faturas.js`, o painel mostra as faturas reais.
 - Se não existir, mostra os **dados de exemplo** de `dados/faturas.exemplo.js`
@@ -20,13 +20,12 @@ O visual segue a identidade Apis Flora usada no Mapa de Transportadoras
 
 | Bloco | Conteúdo |
 |---|---|
-| Indicadores | Em aberto, vencidas, vencem em até 7 dias, emitidas no mês |
-| Lembretes | Vencidas, vencem hoje e próximos 7 dias; botão **Copiar resumo** gera um texto para e-mail ou Teams |
-| Calendário | Valor a vencer por dia; clique num dia para filtrar a tabela |
-| Cronograma | Valor em aberto por semana de vencimento (8 semanas) + vencidas |
+| Resumo | Um parágrafo com o total em aberto, o vencido e o que vence em 7 dias; botão **Copiar resumo para e-mail** |
+| Régua de vencimentos | Cada fatura vira células de favo empilhadas no dia em que vence (cada célula vale um valor fixo, indicado na legenda); clique numa fatura para ver o dia no livro |
+| Agenda de pagamentos | Vencidas e próximos 21 dias, dia a dia |
 | Por transportadora | Em aberto e vencido por transportadora; clique para filtrar |
 | Para conferir | Duplicidade (mesmo CNPJ + número), leitura com baixa confiança, campos faltando, prazo menor que 5 dias, vencimento antes da emissão |
-| Tabela | Todas as faturas, ordenável, com link para o PDF e marcação de "paga" |
+| Livro de faturas | Todas as faturas, ordenável, com link para o PDF e marcação de "paga" |
 
 "Marcar como paga" fica salvo só no navegador de quem marcou. Quando o coletor
 souber a situação de pagamento (por exemplo, cruzando com um relatório do TMS),
