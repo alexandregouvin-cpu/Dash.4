@@ -54,8 +54,10 @@ Nível de confiança mostrado no painel:
 2. Abra o Prompt de Comando nesta pasta e rode:
 
    ```
-   pip install -r requirements.txt
+   py -m pip install -r requirements.txt
    ```
+
+   Se o Windows disser que `py` não é reconhecido, use `python -m pip ...`.
 
 3. Copie `config.exemplo.json` para `config.json` e ajuste:
 
@@ -73,9 +75,9 @@ Nível de confiança mostrado no painel:
 ## Uso
 
 ```
-python coletor.py                    # lê o Outlook
-python coletor.py --pasta C:\faturas  # lê PDFs de uma pasta, útil para testar
-python coletor.py --reprocessar      # lê tudo de novo, ignorando o registro
+py coletor.py                    # lê o Outlook
+py coletor.py --pasta C:\faturas  # lê PDFs de uma pasta, útil para testar
+py coletor.py --reprocessar      # lê tudo de novo, ignorando o registro
 ```
 
 Depois, abra o `index.html` do painel. Ele passa a mostrar as faturas reais no
