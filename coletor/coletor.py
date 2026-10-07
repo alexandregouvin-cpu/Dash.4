@@ -429,7 +429,15 @@ def main() -> None:
     if arq_registro.exists() and not args.reprocessar:
         registro = json.loads(arq_registro.read_text(encoding="utf-8"))
 
-    novos = pdfs_da_pasta(Path(args.pasta), cfg) if args.pasta else pdfs_do_outlook(cfg, registro)
+    if args.pasta:
+        pasta = Path(args.pasta)
+        if not pasta.is_dir():
+            raise SystemExit(f"A pasta {pasta} não existe. Confira o caminho (dica: copie da barra de endereço do Explorador).")
+        novos = pdfs_da_pasta(pasta, cfg)
+        if not novos:
+            raise SystemExit(f"Nenhum PDF encontrado em {pasta}. O painel não foi alterado.")
+    else:
+        novos = pdfs_do_outlook(cfg, registro)
     log(f"{len(novos)} PDF(s) encontrados")
 
     prontas = json.loads(Path(args.leituras_prontas).read_text(encoding="utf-8")) if args.leituras_prontas else None
