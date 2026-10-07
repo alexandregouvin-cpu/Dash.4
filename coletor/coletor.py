@@ -41,7 +41,8 @@ RAIZ_PAINEL = AQUI.parent  # pasta onde está o index.html
 
 CONFIG_PADRAO = {
     "outlook_conta": "",
-    "outlook_pasta": "Caixa de Entrada/Faturas Transportadoras",
+    "outlook_pastas": [],
+    "outlook_pasta": "Faturas transportadoras",
     "dias_retroativos": 45,
     "remetentes_permitidos": [],
     "cnpj_raiz_empresa": "49.345.358",
@@ -344,7 +345,7 @@ def pdfs_da_pasta(pasta: Path, cfg: dict) -> list[dict]:
         vistos.add(p.resolve())
         h = hash_arquivo(p)
         data = dt.date.fromtimestamp(p.stat().st_mtime)
-        itens.append({"hash": h, "arquivo": guardar_pdf(p, cfg, data, h), "caminho": p,
+        itens.append({"hash": h, "caminho": p, "data": data,
                       "remetente": None, "recebido_em": data.isoformat(), "nome": p.name})
     return itens
 
@@ -356,17 +357,43 @@ def pdfs_do_outlook(cfg: dict, registro: dict) -> list[dict]:
         raise SystemExit("Leitura do Outlook só funciona no Windows com o pywin32 instalado. Use --pasta para testar.")
 
     ns = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
-    pasta = ns.Folders[cfg["outlook_conta"]] if cfg["outlook_conta"] else ns.GetDefaultFolder(6).Parent
-    for nome in [n for n in cfg["outlook_pasta"].split("/") if n]:
-        filhas = {f.Name.lower(): f for f in pasta.Folders}
-        if nome.lower() not in filhas:
-            raise SystemExit(f'Pasta "{nome}" não encontrada no Outlook. Pastas disponíveis: {", ".join(f.Name for f in pasta.Folders)}')
-        pasta = filhas[nome.lower()]
-
+    raiz_caixa = ns.Folders[cfg["outlook_conta"]] if cfg["outlook_conta"] else ns.GetDefaultFolder(6).Parent
+    pastas = _pastas_outlook(raiz_caixa, cfg)
+    log("Pastas do Outlook lidas: " + ", ".join(p.Name for p in pastas))
     limite = dt.datetime.now() - dt.timedelta(days=cfg["dias_retroativos"])
     permitidos = {r.lower() for r in cfg["remetentes_permitidos"]}
     temp = AQUI / "_temp"
     temp.mkdir(exist_ok=True)
+    saida = []
+    for pasta in pastas:
+        saida += _anexos_da_pasta(pasta, limite, permitidos, temp, registro)
+    return saida
+
+
+def _todas_as_pastas(pasta):
+    for f in pasta.Folders:
+        yield f
+        yield from _todas_as_pastas(f)
+
+
+def _pastas_outlook(raiz_caixa, cfg: dict) -> list:
+    """Pastas a ler. "outlook_pastas" aceita nomes (achados em qualquer nível da caixa)
+    ou "*" para a caixa inteira. Mantém compatibilidade com "outlook_pasta"."""
+    nomes = cfg.get("outlook_pastas") or [cfg.get("outlook_pasta", "")]
+    todas = list(_todas_as_pastas(raiz_caixa))
+    if "*" in nomes:
+        return [f for f in todas if f.DefaultItemType == 0]  # só pastas de e-mail
+    escolhidas = []
+    for nome in nomes:
+        alvo = nome.split("/")[-1].strip().lower()
+        achadas = [f for f in todas if f.Name.strip().lower() == alvo]
+        if not achadas:
+            raise SystemExit(f'Pasta "{nome}" não encontrada no Outlook.')
+        escolhidas += [f for f in achadas if f not in escolhidas]
+    return escolhidas
+
+
+def _anexos_da_pasta(pasta, limite, permitidos, temp, registro) -> list[dict]:
     itens = pasta.Items
     itens.Sort("[ReceivedTime]", True)
     saida = []
@@ -387,10 +414,11 @@ def pdfs_do_outlook(cfg: dict, registro: dict) -> list[dict]:
             chave_anexo = f"{msg.EntryID}|{anexo.FileName}"
             if chave_anexo in registro["anexos"]:
                 continue
-            tmp = temp / re.sub(r"[^\w.\-]+", "_", anexo.FileName)
+            nome_seguro = re.sub(r"[^\w.\-]+", "_", anexo.FileName)
+            tmp = temp / f"{len(list(temp.iterdir()))}_{nome_seguro}"
             anexo.SaveAsFile(str(tmp))
             h = hash_arquivo(tmp)
-            saida.append({"hash": h, "arquivo": guardar_pdf(tmp, cfg, recebido.date(), h), "caminho": tmp,
+            saida.append({"hash": h, "caminho": tmp, "data": recebido.date(),
                           "remetente": remetente, "recebido_em": recebido.date().isoformat(),
                           "nome": anexo.FileName, "chave_anexo": chave_anexo})
     return saida
@@ -430,9 +458,9 @@ def main() -> None:
 
     cfg = carregar_config()
     arq_registro = AQUI / cfg["arquivo_registro"]
-    registro = {"leituras": {}, "anexos": []}
+    registro = {"leituras": {}, "anexos": [], "ignorados": {}}
     if arq_registro.exists() and not args.reprocessar:
-        registro = json.loads(arq_registro.read_text(encoding="utf-8"))
+        registro.update(json.loads(arq_registro.read_text(encoding="utf-8")))
 
     if args.pasta:
         pasta = Path(args.pasta)
@@ -444,14 +472,17 @@ def main() -> None:
     else:
         novos = pdfs_do_outlook(cfg, registro)
     log(f"{len(novos)} PDF(s) encontrados")
+    ja_lidos = sum(1 for i in novos if i["hash"] in registro["leituras"] or i["hash"] in registro["ignorados"])
+    if ja_lidos:
+        log(f"  {ja_lidos} já tinham sido lidos antes")
 
     prontas = json.loads(Path(args.leituras_prontas).read_text(encoding="utf-8")) if args.leituras_prontas else None
     cliente = None
     erros = 0
     for item in novos:
-        anterior = registro["leituras"].get(item["hash"])
+        anterior = registro["leituras"].get(item["hash"]) or registro["ignorados"].get(item["hash"])
         if anterior and (cfg["leitura"] == "claude" or anterior.get("versao") == VERSAO_LEITORES):
-            log(f"  já lido: {item['nome']}")
+            pass  # já lido antes
         else:
             try:
                 log(f"  lendo: {item['nome']}...")
@@ -466,9 +497,16 @@ def main() -> None:
                         import anthropic
                         cliente = anthropic.Anthropic()
                     lido = ler_com_claude(item["caminho"], cfg, cliente)
-                registro["leituras"][item["hash"]] = {"lido": lido, "boletos": boletos, "versao": VERSAO_LEITORES,
-                                                      "origem": {k: item[k] for k in ("arquivo", "remetente", "recebido_em", "nome")}}
-                log(f"  lido: {item['nome']} -> {lido.get('transportadora')} {lido.get('numero_fatura')}")
+                if not lido.get("eh_fatura", True):
+                    registro["ignorados"][item["hash"]] = {"nome": item["nome"], "versao": VERSAO_LEITORES}
+                    registro["leituras"].pop(item["hash"], None)
+                    log(f"  não é fatura, ignorado: {item['nome']}")
+                else:
+                    registro["ignorados"].pop(item["hash"], None)
+                    item["arquivo"] = guardar_pdf(item["caminho"], cfg, item["data"], item["hash"])
+                    registro["leituras"][item["hash"]] = {"lido": lido, "boletos": boletos, "versao": VERSAO_LEITORES,
+                                                          "origem": {k: item[k] for k in ("arquivo", "remetente", "recebido_em", "nome")}}
+                    log(f"  lido: {item['nome']} -> {lido.get('transportadora')} {lido.get('numero_fatura')}")
             except RuntimeError as e:
                 erros += 1
                 log(f"  ERRO em {item['nome']}: {e}")
@@ -505,6 +543,7 @@ def main() -> None:
     saida = gravar_painel(faturas, cfg)
     shutil.rmtree(AQUI / "_temp", ignore_errors=True)
     conferir_n = sum(1 for f in faturas if f["pendencias"])
+    ignorados += len(registro["ignorados"])
     log(f"{len(faturas)} fatura(s) no painel, {conferir_n} para conferir, {ignorados} PDF(s) que não eram fatura, {erros} erro(s)")
     log(f"Painel atualizado: {saida}")
     if erros:

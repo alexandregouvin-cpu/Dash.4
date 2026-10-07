@@ -6,19 +6,23 @@ custo e sem enviar as faturas para nenhum serviço externo.
 
 ## Como funciona
 
-1. Abre a pasta do Outlook definida no `config.json` e pega os anexos em PDF dos
-   últimos dias (45 por padrão).
-2. Copia cada PDF para `pdfs/AAAA-MM/`, para o link "Abrir" do painel funcionar.
-3. Reconhece o modelo da fatura e tira transportadora, número, emissão,
+1. Abre as pastas do Outlook definidas no `config.json` e pega os anexos em PDF
+   dos últimos dias (45 por padrão).
+2. Descarta o que não é fatura de frete (nota fiscal, DACTE avulso, manual,
+   comunicado...) pelo conteúdo do PDF, não pela pasta. Para contar como fatura
+   de modelo desconhecido, o PDF precisa ter boleto, a empresa como pagadora e
+   termos de transporte (CT-e, frete, conhecimento).
+3. Copia cada fatura para `pdfs/AAAA-MM/`, para o link "Abrir" do painel funcionar.
+4. Reconhece o modelo da fatura e tira transportadora, número, emissão,
    vencimento, valor, quantidade de CT-es, CNPJ do pagador e se é frete ou
    reentrega/devolução (`leitores.py`, um leitor por modelo).
-4. Confere o resultado com a **linha digitável do boleto**, que traz o
+5. Confere o resultado com a **linha digitável do boleto**, que traz o
    vencimento e o valor embutidos. Se não bater, a fatura vai para "Conferir"
    no painel com o valor do boleto ao lado.
-5. A mesma fatura recebida mais de uma vez vira um registro só, com o aviso
+6. A mesma fatura recebida mais de uma vez vira um registro só, com o aviso
    "Recebida N vezes".
-6. O que já foi baixado do Outlook fica anotado em `registro.json`, para não
-   baixar o mesmo anexo de novo.
+7. O que já foi lido fica anotado fica anotado em `registro.json`, para não
+   ler o mesmo PDF de novo.
 
 ## Modelos de fatura reconhecidos
 
@@ -63,7 +67,7 @@ Nível de confiança mostrado no painel:
 
    | Campo | O que é |
    |---|---|
-   | `outlook_pasta` | Caminho da pasta com as faturas, ex.: `Caixa de Entrada/Faturas Transportadoras` |
+   | `outlook_pastas` | Pastas a ler, pelo nome (achadas em qualquer nível da caixa), ex.: `["Faturas transportadoras", "Ativa"]`. Use `["*"]` para a caixa inteira |
    | `outlook_conta` | Deixe vazio para a sua caixa; preencha com o nome da caixa compartilhada se for o caso |
    | `dias_retroativos` | Quantos dias para trás buscar |
    | `remetentes_permitidos` | Opcional: só ler e-mails desses domínios, ex.: `["@braspress.com.br"]` |

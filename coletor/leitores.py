@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 
 # Aumente quando um leitor mudar: o coletor relê só os PDFs lidos com versão anterior.
-VERSAO_LEITORES = "1"
+VERSAO_LEITORES = "2"
 
 CAMPOS = (
     "eh_fatura", "transportadora", "nome_curto", "cnpj_transportadora", "numero_fatura",
@@ -224,8 +224,10 @@ def ler_generico(t: str, boletos: list[dict], raiz_empresa: str) -> dict:
     if boletos:
         r["data_vencimento"], r["valor_total"] = boletos[0]["vencimento"], boletos[0]["valor"]
     r["observacao"] = "Modelo de fatura não reconhecido: confira os dados"
-    if not boletos and not re.search(r"fatura", t, re.I):
-        r["eh_fatura"] = False
+    # Só conta como fatura de frete se tiver boleto, a empresa como pagadora e
+    # vocabulário de transporte. Nota fiscal, DACTE avulso, manual etc. ficam de fora.
+    de_frete = re.search(r"\bCT-?e\b|conhecimento|frete|transport", t, re.I)
+    r["eh_fatura"] = bool(boletos and r["cnpj_pagador"] and de_frete)
     return r
 
 

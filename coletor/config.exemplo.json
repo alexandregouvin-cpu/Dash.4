@@ -1,6 +1,11 @@
 {
   "outlook_conta": "",
-  "outlook_pasta": "Caixa de Entrada/Faturas Transportadoras",
+  "outlook_pastas": [
+    "Faturas transportadoras",
+    "Ativa",
+    "Expresso São Miguel",
+    "Braspress - Comunicado"
+  ],
   "dias_retroativos": 45,
   "remetentes_permitidos": [],
   "cnpj_raiz_empresa": "49.345.358",
