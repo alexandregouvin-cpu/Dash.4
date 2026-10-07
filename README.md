@@ -67,8 +67,9 @@ window.FATURAS_DADOS = {
 
 ## Coletor do Outlook
 
-A pasta `coletor/` tem o programa que lê os PDFs de fatura do Outlook com a API
-do Claude, confere vencimento e valor com o boleto e grava `dados/faturas.js`.
+A pasta `coletor/` tem o programa que lê os PDFs de fatura do Outlook (leitura
+local por modelo de fatura, sem custo), confere vencimento e valor com o boleto
+e grava `dados/faturas.js`.
 Instalação e uso em [coletor/README.md](coletor/README.md).
 
 Campos extras que o coletor grava além dos do exemplo acima: `razao_social`,

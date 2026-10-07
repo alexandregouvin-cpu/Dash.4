@@ -7,9 +7,10 @@
   "pasta_pdfs": "../pdfs",
   "arquivo_saida": "../dados/faturas.js",
   "arquivo_registro": "registro.json",
-  "modelo": "claude-opus-5-5",
-  "esforco": "low",
   "apelidos": {
     "01.125.797": "Ativa"
-  }
+  },
+  "leitura": "local",
+  "modelo": "claude-opus-5-5",
+  "esforco": "low"
 }

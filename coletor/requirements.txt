@@ -1,3 +1,4 @@
-anthropic
 pdfplumber
 pywin32; sys_platform == "win32"
+# Só para o modo "leitura": "claude" no config.json:
+# anthropic

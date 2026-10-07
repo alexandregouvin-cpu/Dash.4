@@ -1,17 +1,21 @@
 """
 Coletor de faturas de frete.
 
-Busca os PDFs de fatura no Outlook (ou numa pasta local), lê cada um com a
-API do Claude, confere vencimento e valor com a linha digitável do boleto e
-grava dados/faturas.js para o painel.
+Busca os PDFs de fatura no Outlook (ou numa pasta local), lê cada um,
+confere vencimento e valor com a linha digitável do boleto e grava
+dados/faturas.js para o painel.
+
+A leitura padrão é local (leitores.py): um leitor por modelo de fatura,
+sem custo e sem enviar nada para fora do computador. Com "leitura": "claude"
+no config.json, os PDFs são lidos pela API do Claude (precisa de chave).
 
 Uso:
     python coletor.py                      # lê a pasta do Outlook definida no config.json
     python coletor.py --pasta C:\\faturas    # lê os PDFs de uma pasta local
     python coletor.py --reprocessar        # ignora o registro e lê tudo de novo
 
-Requisitos: Python 3.10+, pip install -r requirements.txt e a variável de
-ambiente ANTHROPIC_API_KEY com a chave da API.
+Requisitos: Python 3.10+ e pip install -r requirements.txt. Só no modo
+"claude": pip install anthropic e a variável ANTHROPIC_API_KEY.
 """
 
 from __future__ import annotations
@@ -27,6 +31,8 @@ import sys
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
+sys.path.insert(0, str(AQUI))
+from leitores import ler_local  # noqa: E402
 RAIZ_PAINEL = AQUI.parent  # pasta onde está o index.html
 
 # ---------------------------------------------------------------------------
@@ -42,6 +48,7 @@ CONFIG_PADRAO = {
     "pasta_pdfs": "../pdfs",
     "arquivo_saida": "../dados/faturas.js",
     "arquivo_registro": "registro.json",
+    "leitura": "local",
     "modelo": "claude-opus-5-5",
     "esforco": "low",
     "apelidos": {},
@@ -437,6 +444,8 @@ def main() -> None:
                 boletos = ler_boletos(texto)
                 if prontas is not None:
                     lido = prontas[item["nome"]]
+                elif cfg["leitura"] != "claude":
+                    lido = ler_local(texto, boletos, so_digitos(cfg["cnpj_raiz_empresa"]))
                 else:
                     if cliente is None:
                         import anthropic
@@ -450,6 +459,16 @@ def main() -> None:
                 continue
         if item.get("chave_anexo") and item["chave_anexo"] not in registro["anexos"]:
             registro["anexos"].append(item["chave_anexo"])
+
+    # Na leitura local, relê os PDFs já guardados: quando um leitor novo é
+    # adicionado, faturas antigas que estavam em "Conferir" se corrigem sozinhas.
+    if cfg["leitura"] != "claude" and prontas is None:
+        for r in registro["leituras"].values():
+            arq = RAIZ_PAINEL / r["origem"]["arquivo"]
+            if arq.exists():
+                texto = extrair_texto(arq)
+                r["boletos"] = ler_boletos(texto)
+                r["lido"] = ler_local(texto, r["boletos"], so_digitos(cfg["cnpj_raiz_empresa"]))
 
     faturas = []
     ignorados = 0
