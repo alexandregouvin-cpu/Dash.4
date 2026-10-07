@@ -32,7 +32,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI))
-from leitores import ler_local  # noqa: E402
+from leitores import VERSAO_LEITORES, ler_local  # noqa: E402
 RAIZ_PAINEL = AQUI.parent  # pasta onde está o index.html
 
 # ---------------------------------------------------------------------------
@@ -449,10 +449,12 @@ def main() -> None:
     cliente = None
     erros = 0
     for item in novos:
-        if item["hash"] in registro["leituras"]:
+        anterior = registro["leituras"].get(item["hash"])
+        if anterior and (cfg["leitura"] == "claude" or anterior.get("versao") == VERSAO_LEITORES):
             log(f"  já lido: {item['nome']}")
         else:
             try:
+                log(f"  lendo: {item['nome']}...")
                 texto = extrair_texto(item["caminho"])
                 boletos = ler_boletos(texto)
                 if prontas is not None:
@@ -464,7 +466,8 @@ def main() -> None:
                         import anthropic
                         cliente = anthropic.Anthropic()
                     lido = ler_com_claude(item["caminho"], cfg, cliente)
-                registro["leituras"][item["hash"]] = {"lido": lido, "boletos": boletos, "origem": {k: item[k] for k in ("arquivo", "remetente", "recebido_em", "nome")}}
+                registro["leituras"][item["hash"]] = {"lido": lido, "boletos": boletos, "versao": VERSAO_LEITORES,
+                                                      "origem": {k: item[k] for k in ("arquivo", "remetente", "recebido_em", "nome")}}
                 log(f"  lido: {item['nome']} -> {lido.get('transportadora')} {lido.get('numero_fatura')}")
             except RuntimeError as e:
                 erros += 1
@@ -473,15 +476,19 @@ def main() -> None:
         if item.get("chave_anexo") and item["chave_anexo"] not in registro["anexos"]:
             registro["anexos"].append(item["chave_anexo"])
 
-    # Na leitura local, relê os PDFs já guardados: quando um leitor novo é
-    # adicionado, faturas antigas que estavam em "Conferir" se corrigem sozinhas.
+    # Na leitura local, relê só os PDFs lidos por uma versão anterior dos leitores:
+    # quando um leitor novo é adicionado, faturas antigas em "Conferir" se corrigem sozinhas.
     if cfg["leitura"] != "claude" and prontas is None:
         for r in registro["leituras"].values():
+            if r.get("versao") == VERSAO_LEITORES:
+                continue
             arq = RAIZ_PAINEL / r["origem"]["arquivo"]
             if arq.exists():
+                log(f"  relendo com leitores atualizados: {r['origem']['nome']}...")
                 texto = extrair_texto(arq)
                 r["boletos"] = ler_boletos(texto)
                 r["lido"] = ler_local(texto, r["boletos"], so_digitos(cfg["cnpj_raiz_empresa"]))
+                r["versao"] = VERSAO_LEITORES
 
     faturas = []
     ignorados = 0

@@ -13,6 +13,9 @@ from __future__ import annotations
 
 import re
 
+# Aumente quando um leitor mudar: o coletor relê só os PDFs lidos com versão anterior.
+VERSAO_LEITORES = "1"
+
 CAMPOS = (
     "eh_fatura", "transportadora", "nome_curto", "cnpj_transportadora", "numero_fatura",
     "data_emissao", "data_vencimento", "valor_total", "qtd_ctes", "cnpj_pagador",
