@@ -336,7 +336,12 @@ def guardar_pdf(origem: Path, cfg: dict, data: dt.date, h: str) -> str:
 
 def pdfs_da_pasta(pasta: Path, cfg: dict) -> list[dict]:
     itens = []
-    for p in sorted(pasta.glob("*.pdf")) + sorted(pasta.glob("*.PDF")):
+    # Inclui subpastas; .pdf ou .PDF; o mesmo arquivo nunca entra duas vezes.
+    vistos = set()
+    for p in sorted(pasta.rglob("*")):
+        if not p.is_file() or p.suffix.lower() != ".pdf" or p.resolve() in vistos:
+            continue
+        vistos.add(p.resolve())
         h = hash_arquivo(p)
         data = dt.date.fromtimestamp(p.stat().st_mtime)
         itens.append({"hash": h, "arquivo": guardar_pdf(p, cfg, data, h), "caminho": p,
