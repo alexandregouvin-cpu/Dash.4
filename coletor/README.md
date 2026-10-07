@@ -21,7 +21,7 @@ custo e sem enviar as faturas para nenhum serviço externo.
    no painel com o valor do boleto ao lado.
 6. A mesma fatura recebida mais de uma vez vira um registro só, com o aviso
    "Recebida N vezes".
-7. O que já foi lido fica anotado fica anotado em `registro.json`, para não
+7. O que já foi lido fica anotado em `registro.json`, para não
    ler o mesmo PDF de novo.
 
 ## Modelos de fatura reconhecidos
