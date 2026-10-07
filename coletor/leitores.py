@@ -11,6 +11,7 @@ Todos os leitores devolvem o mesmo dicionário (ver CAMPOS).
 
 from __future__ import annotations
 
+import html
 import re
 
 # Aumente quando um leitor mudar: o coletor relê só os PDFs lidos com versão anterior.
@@ -280,7 +281,7 @@ def nome_por_texto(nome: str | None) -> str | None:
 
 def _texto_limpo(s: str) -> str:
     s = re.sub(r"<[^>]+>", " ", s or "")
-    s = s.replace("&nbsp;", " ").replace("\xa0", " ")
+    s = html.unescape(s).replace("\xa0", " ")
     return re.sub(r"[ \t\r\f\v]+", " ", s)
 
 

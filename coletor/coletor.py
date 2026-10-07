@@ -25,6 +25,7 @@ import base64
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import shutil
 import sys
@@ -41,6 +42,7 @@ RAIZ_PAINEL = AQUI.parent  # pasta onde está o index.html
 
 CONFIG_PADRAO = {
     "outlook_conta": "",
+    "pasta_entrada": "",
     "outlook_pastas": [],
     "outlook_pasta": "Faturas transportadoras",
     "dias_retroativos": 45,
@@ -350,6 +352,32 @@ def pdfs_da_pasta(pasta: Path, cfg: dict) -> list[dict]:
     return itens
 
 
+def avisos_da_pasta(pasta: Path, registro: dict) -> int:
+    """Cópias de e-mail (.html) gravadas pelo fluxo do Power Automate.
+    Formato: linhas "Assunto:", "De:" e "Recebido:", uma linha "---" e depois o corpo em HTML."""
+    novos = 0
+    for p in sorted(pasta.rglob("*")):
+        if not p.is_file() or p.suffix.lower() not in (".html", ".htm"):
+            continue
+        chave = "arq:" + hash_arquivo(p)
+        if chave in registro["emails"] or chave in registro["emails_vistos"]:
+            continue
+        bruto = p.read_text(encoding="utf-8", errors="replace")
+        cabecalho, _, corpo = bruto.partition("\n---\n")
+        campos = dict(re.findall(r"^(Assunto|De|Recebido):\s*(.*)$", cabecalho, re.M))
+        recebido = (campos.get("Recebido") or "")[:10] or dt.date.fromtimestamp(p.stat().st_mtime).isoformat()
+        lido = ler_email(campos.get("Assunto", ""), corpo or bruto, campos.get("De", ""))
+        if lido:
+            registro["emails"][chave] = {"lido": lido, "origem": {
+                "arquivo": link_da_fatura(corpo or bruto), "remetente": campos.get("De"),
+                "recebido_em": recebido, "nome": campos.get("Assunto") or p.name}}
+            log(f"  aviso por e-mail: {lido['nome_curto']} {lido['numero_fatura']}")
+            novos += 1
+        else:
+            registro["emails_vistos"].append(chave)
+    return novos
+
+
 def pdfs_do_outlook(cfg: dict, registro: dict) -> list[dict]:
     try:
         import win32com.client  # pywin32, só no Windows com o Outlook instalado
@@ -521,13 +549,16 @@ def main() -> None:
     if arq_registro.exists() and not args.reprocessar:
         registro.update(json.loads(arq_registro.read_text(encoding="utf-8")))
 
-    if args.pasta:
-        pasta = Path(args.pasta)
+    pasta_txt = args.pasta or os.path.expandvars(cfg.get("pasta_entrada") or "")
+    if pasta_txt:
+        pasta = Path(pasta_txt)
         if not pasta.is_dir():
             raise SystemExit(f"A pasta {pasta} não existe. Confira o caminho (dica: copie da barra de endereço do Explorador).")
+        log(f"Lendo a pasta {pasta}")
         novos = pdfs_da_pasta(pasta, cfg)
-        if not novos:
-            raise SystemExit(f"Nenhum PDF encontrado em {pasta}. O painel não foi alterado.")
+        avisos = avisos_da_pasta(pasta, registro)
+        if not novos and not avisos and not registro["leituras"] and not registro["emails"]:
+            raise SystemExit(f"Nenhum PDF ou e-mail encontrado em {pasta}. O painel não foi alterado.")
     else:
         novos = pdfs_do_outlook(cfg, registro)
     log(f"{len(novos)} PDF(s) encontrados")
