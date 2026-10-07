@@ -579,7 +579,8 @@ body.tv .conferir .ver { display: none; }
         '<td class="num">' + (f.dVenc ? dataLonga.format(f.dVenc) : "—") + (paga ? "" : '<span class="sub">' + relativo(f) + "</span>") + "</td>" +
         '<td class="dir num">' + (f.qtd_ctes == null ? "—" : f.qtd_ctes) + "</td>" +
         '<td class="dir num">' + brl.format(f.valor) + "</td>" +
-        "<td>" + (f.arquivo ? '<a href="' + esc(f.arquivo) + '" target="_blank" rel="noopener">Abrir</a>' : '<span class="sub">—</span>') + "</td>" +
+        "<td>" + (f.arquivo ? '<a href="' + esc(f.arquivo) + '" target="_blank" rel="noopener">' + (f.fonte === "email" ? "Página" : "Abrir") + "</a>" : '<span class="sub">—</span>') +
+        (f.fonte === "email" ? '<span class="sub">só aviso por e-mail</span>' : "") + "</td>" +
         '<td><label class="marcar"><input type="checkbox" data-paga="' + esc(f.id) + '"' + (paga ? " checked" : "") + (f.pago ? ' disabled title="Informado como pago na origem dos dados"' : "") + "> " + (paga ? "Sim" : "Não") + "</label></td></tr>";
     }).join("") : '<tr><td colspan="9" class="vazio">Nenhuma fatura com esses filtros.</td></tr>';
     document.querySelector("#tabela tfoot").innerHTML = linhas.length ? '<tr><td colspan="5">' + plural(linhas.length, "fatura", "faturas") + '</td><td class="dir num">' +

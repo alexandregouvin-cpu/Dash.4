@@ -32,7 +32,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI))
-from leitores import VERSAO_LEITORES, ler_local  # noqa: E402
+from leitores import VERSAO_LEITORES, chave_fatura, ler_email, ler_local, link_da_fatura  # noqa: E402
 RAIZ_PAINEL = AQUI.parent  # pasta onde está o index.html
 
 # ---------------------------------------------------------------------------
@@ -408,6 +408,7 @@ def _anexos_da_pasta(pasta, limite, permitidos, temp, registro) -> list[dict]:
         remetente = _endereco_remetente(msg)
         if permitidos and not any(remetente.lower().endswith(r) for r in permitidos):
             continue
+        _ler_aviso(msg, remetente, recebido, registro)
         for anexo in msg.Attachments:
             if not str(anexo.FileName).lower().endswith(".pdf"):
                 continue
@@ -421,6 +422,64 @@ def _anexos_da_pasta(pasta, limite, permitidos, temp, registro) -> list[dict]:
             saida.append({"hash": h, "caminho": tmp, "data": recebido.date(),
                           "remetente": remetente, "recebido_em": recebido.date().isoformat(),
                           "nome": anexo.FileName, "chave_anexo": chave_anexo})
+    return saida
+
+
+def _ler_aviso(msg, remetente: str, recebido: dt.datetime, registro: dict) -> None:
+    """Avisos "sua fatura está disponível" sem PDF: guarda número, valor, vencimento e o link."""
+    if msg.EntryID in registro["emails"] or msg.EntryID in registro["emails_vistos"]:
+        return
+    try:
+        lido = ler_email(msg.Subject or "", msg.Body or "", msg.SenderName or remetente)
+    except Exception:
+        lido = None
+    if lido:
+        try:
+            link = link_da_fatura(msg.HTMLBody)
+        except Exception:
+            link = None
+        registro["emails"][msg.EntryID] = {"lido": lido, "origem": {
+            "arquivo": link, "remetente": remetente, "recebido_em": recebido.date().isoformat(), "nome": msg.Subject}}
+        log(f"  aviso por e-mail: {lido['nome_curto']} {lido['numero_fatura']}")
+    else:
+        registro["emails_vistos"].append(msg.EntryID)
+
+
+def faturas_dos_avisos(registro: dict, faturas_pdf: list[dict]) -> list[dict]:
+    """Faturas que só chegaram como aviso por e-mail. Se o PDF da mesma fatura existe,
+    fica o PDF (dados completos). Lembretes repetidos viram um registro só."""
+    def mesma(a_nome, a_num, a_valor, f):
+        nome_a, num_a = chave_fatura(a_nome, a_num)
+        nome_b, num_b = chave_fatura(f["transportadora"], f["numero"])
+        return num_a == num_b and (nome_a[:5] == nome_b[:5] or abs((a_valor or 0) - (f["valor"] or 0)) < 0.01)
+
+    saida: list[dict] = []
+    avisos = sorted(registro["emails"].items(), key=lambda kv: kv[1]["origem"].get("recebido_em") or "", reverse=True)
+    for entry, r in avisos:
+        lido = r["lido"]
+        if any(mesma(lido["nome_curto"], lido["numero_fatura"], lido["valor_total"], f) for f in faturas_pdf + saida):
+            continue
+        saida.append({
+            "id": "em" + hashlib.sha256(entry.encode()).hexdigest()[:14],
+            "transportadora": lido["nome_curto"],
+            "razao_social": lido["transportadora"],
+            "cnpj": None,
+            "numero": lido["numero_fatura"],
+            "emissao": None,
+            "vencimento": valida_data(lido["data_vencimento"]),
+            "valor": lido["valor_total"] or 0,
+            "qtd_ctes": None,
+            "cnpj_pagador": None,
+            "tipo": "frete",
+            "remetente": r["origem"].get("remetente"),
+            "recebido_em": r["origem"].get("recebido_em"),
+            "arquivo": r["origem"].get("arquivo"),
+            "fonte": "email",
+            "linha_digitavel": None,
+            "confianca": "media",
+            "pendencias": [],
+            "pago": False,
+        })
     return saida
 
 
@@ -458,7 +517,7 @@ def main() -> None:
 
     cfg = carregar_config()
     arq_registro = AQUI / cfg["arquivo_registro"]
-    registro = {"leituras": {}, "anexos": [], "ignorados": {}}
+    registro = {"leituras": {}, "anexos": [], "ignorados": {}, "emails": {}, "emails_vistos": []}
     if arq_registro.exists() and not args.reprocessar:
         registro.update(json.loads(arq_registro.read_text(encoding="utf-8")))
 
@@ -537,12 +596,16 @@ def main() -> None:
         faturas.append(montar_fatura(r["lido"], dict(r["origem"], hash=h), r["boletos"], cfg))
     padronizar_nomes(faturas, cfg)
     faturas = juntar_copias(faturas)
+    faturas += faturas_dos_avisos(registro, faturas)
     faturas.sort(key=lambda f: (f["vencimento"] or "9999", f["transportadora"]))
 
     arq_registro.write_text(json.dumps(registro, ensure_ascii=False, indent=1), encoding="utf-8")
     saida = gravar_painel(faturas, cfg)
     shutil.rmtree(AQUI / "_temp", ignore_errors=True)
     conferir_n = sum(1 for f in faturas if f["pendencias"])
+    so_aviso = sum(1 for f in faturas if f.get("fonte") == "email")
+    if so_aviso:
+        log(f"{so_aviso} fatura(s) vieram só por aviso de e-mail, sem PDF")
     ignorados += len(registro["ignorados"])
     log(f"{len(faturas)} fatura(s) no painel, {conferir_n} para conferir, {ignorados} PDF(s) que não eram fatura, {erros} erro(s)")
     log(f"Painel atualizado: {saida}")

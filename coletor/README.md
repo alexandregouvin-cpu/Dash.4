@@ -12,6 +12,11 @@ custo e sem enviar as faturas para nenhum serviço externo.
    comunicado...) pelo conteúdo do PDF, não pela pasta. Para contar como fatura
    de modelo desconhecido, o PDF precisa ter boleto, a empresa como pagadora e
    termos de transporte (CT-e, frete, conhecimento).
+   Também lê os **avisos por e-mail sem PDF** ("Sua fatura Nº ... está
+   disponível" do sistema SSW e "Sua fatura chegou" da Expresso São Miguel):
+   número, valor, vencimento e o link "AQUI". Se o PDF da mesma fatura também
+   chegar, fica o PDF; lembretes repetidos viram um registro só. No painel,
+   essas faturas aparecem com o link "Página" e a nota "só aviso por e-mail".
 3. Copia cada fatura para `pdfs/AAAA-MM/`, para o link "Abrir" do painel funcionar.
 4. Reconhece o modelo da fatura e tira transportadora, número, emissão,
    vencimento, valor, quantidade de CT-es, CNPJ do pagador e se é frete ou

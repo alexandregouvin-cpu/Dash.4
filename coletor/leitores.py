@@ -254,3 +254,76 @@ def ler_local(texto: str, boletos: list[dict], raiz_empresa: str = "49345358") -
     if not r["transportadora"]:
         r["transportadora"] = r["nome_curto"]
     return r
+
+
+# ---------------------------------------------------------------------------
+# E-mails sem PDF anexado (avisos "Sua fatura está disponível")
+# ---------------------------------------------------------------------------
+
+# Nome curto pelo nome escrito no e-mail, para quando não há CNPJ.
+NOMES_POR_PALAVRA = [
+    (r"\bativa\b", "Ativa Logística"), (r"\bmosca\b", "Mosca Logística"), (r"\bttjb\b", "TTJB Transportes"),
+    (r"\bavi[oõ]es\b", "Aviões Transportes"), (r"\bs[aã]o miguel\b", "Expresso São Miguel"),
+    (r"\bbraspress\b", "Braspress"), (r"\brodonaves\b", "Rodonaves"), (r"\btroca\b", "Troca Transportes"),
+    (r"\bmovimente\b", "Movimente Express"),
+]
+
+
+def nome_por_texto(nome: str | None) -> str | None:
+    if not nome:
+        return None
+    for padrao, curto in NOMES_POR_PALAVRA:
+        if re.search(padrao, nome, re.I):
+            return curto
+    return nome_curto(nome, None)
+
+
+def _texto_limpo(s: str) -> str:
+    s = re.sub(r"<[^>]+>", " ", s or "")
+    s = s.replace("&nbsp;", " ").replace("\xa0", " ")
+    return re.sub(r"[ \t\r\f\v]+", " ", s)
+
+
+def link_da_fatura(html: str | None) -> str | None:
+    """Endereço do link "AQUI" (ou do número) do aviso de fatura."""
+    if not html:
+        return None
+    for m in re.finditer(r'<a\b[^>]*href="([^"]+)"[^>]*>(.*?)</a>', html, re.I | re.S):
+        texto = _texto_limpo(m.group(2)).strip().upper()
+        if texto == "AQUI" or texto.isdigit():
+            return m.group(1).replace("&amp;", "&")
+    return None
+
+
+def ler_email(assunto: str, corpo: str, remetente: str = "") -> dict | None:
+    """Tira número, valor e vencimento do texto de um aviso de fatura.
+    Devolve None quando o e-mail não é um aviso de fatura conhecido."""
+    t = _texto_limpo(corpo)
+    r = vazio()
+    # Sistema SSW (Ativa, Mosca, TTJB, Aviões, Expresso Rio Vermelho...)
+    m = re.search(rf"Fatura:\s*(\d+)\s*Valor \(R\$\):\s*({VALOR})\s*Vencimento:\s*(\d{{2}})/(\d{{2}})/(\d{{2,4}})", t)
+    if m:
+        ano = m.group(5) if len(m.group(5)) == 4 else "20" + m.group(5)
+        r.update(numero_fatura=m.group(1), valor_total=numero(m.group(2)), data_vencimento=f"{ano}-{m.group(4)}-{m.group(3)}", modelo="email_ssw")
+        r["transportadora"] = achar(r"realizados por (.+?)\.\s", t) or remetente
+    # Expresso São Miguel: "Sua Fatura nº X com vencimento em dd/mm/aaaa no valor de R$ Y"
+    m = m or None
+    if not r["numero_fatura"]:
+        m = re.search(rf"Sua Fatura n[º°o]\s*(\d+) com vencimento em ({DATA}) no valor de R\$ ({VALOR})", t, re.I)
+        if m:
+            r.update(numero_fatura=m.group(1), data_vencimento=data_iso(m.group(2)), valor_total=numero(m.group(3)), modelo="email_sao_miguel")
+            r["transportadora"] = "Expresso São Miguel" if re.search(r"s[aã]o miguel", assunto + " " + remetente, re.I) else remetente
+    if not r["numero_fatura"]:
+        return None
+    r["nome_curto"] = nome_por_texto(r["transportadora"]) or nome_por_texto(remetente)
+    r["transportadora"] = r["transportadora"] or r["nome_curto"]
+    return r
+
+
+def chave_fatura(nome_curto: str | None, numero_fatura: str | None) -> tuple:
+    """Mesma fatura no e-mail e no PDF: o e-mail costuma vir sem o dígito ("1604656")
+    e com zeros à esquerda; o PDF, com o dígito ("1604656-x")."""
+    n = re.sub(r"-\d{1,2}$", "", (numero_fatura or "").strip())
+    n = re.sub(r"\D", "", n).lstrip("0")
+    nome = re.sub(r"[^a-z]", "", (nome_curto or "").lower().replace("ã", "a").replace("õ", "o").replace("í", "i"))[:12]
+    return nome, n
