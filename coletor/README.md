@@ -1,13 +1,55 @@
 # Coletor de faturas
 
-Busca os PDFs de fatura no Outlook, lê cada um e atualiza o painel
-(`dados/faturas.js`). Roda no computador que tem o Outlook instalado, sem
-custo e sem enviar as faturas para nenhum serviço externo.
+Lê os PDFs de fatura e os avisos de e-mail, extrai os dados e atualiza o painel
+(`dados/faturas.js`). Roda no computador, sem custo e sem enviar as faturas
+para nenhum serviço externo.
+
+## Montagem em uso
+
+```
+e-mail chega numa pasta do Outlook
+  → fluxo do Power Automate grava o corpo (.html) e os PDFs na pasta
+    FaturasEntrada do OneDrive
+  → o OneDrive sincroniza a pasta no PC
+  → o Agendador de Tarefas roda executar_coletor.bat (7h e 13h)
+  → o painel (index.html) mostra as faturas
+```
+
+### Fluxos do Power Automate
+
+Um fluxo por pasta do Outlook (um fluxo só aceita uma pasta). Todos iguais,
+muda só o campo **Pasta** do gatilho:
+
+1. Gatilho **Quando um novo email é recebido (V3)** (Office 365 Outlook):
+   Pasta = a pasta da regra, Incluir Anexos = Sim, Somente com Anexos = Não.
+2. **Criar arquivo** (OneDrive for Business), caminho `/FaturasEntrada`:
+   - Nome: `concat('email_', formatDateTime(triggerOutputs()?['body/receivedDateTime'],'yyyyMMdd_HHmmss'), '_', guid(), '.html')`
+   - Conteúdo: `concat('Assunto: ', triggerOutputs()?['body/subject'], decodeUriComponent('%0A'), 'De: ', triggerOutputs()?['body/from'], decodeUriComponent('%0A'), 'Recebido: ', triggerOutputs()?['body/receivedDateTime'], decodeUriComponent('%0A'), '---', decodeUriComponent('%0A'), triggerOutputs()?['body/body'])`
+3. **Aplicar a cada** sobre os anexos do gatilho, com uma **Condição**
+   `endsWith(toLower(item()?['name']), '.pdf')` é igual a `true`. No ramo
+   Verdadeiro:
+   - **Obter Anexo (V2)**: Id da mensagem = `triggerOutputs()?['body/id']`,
+     Id do anexo = `item()?['id']`.
+   - **Criar arquivo** em `/FaturasEntrada`:
+     - Nome: `concat(formatDateTime(triggerOutputs()?['body/receivedDateTime'],'yyyyMMdd_HHmmss'), '_', item()?['name'])`
+     - Conteúdo: `base64ToBinary(body('Obter_Anexo_(V2)')?['contentBytes'])`
+
+Para uma pasta nova: abra um dos fluxos → **Salvar como** → **Editar** →
+troque a Pasta e confira Incluir Anexos = Sim e Somente com Anexos = Não
+(a cópia perde esses dois) → **Salvar** → **Ligar**.
+
+A pasta FaturasEntrada fica no OneDrive pessoal de quem criou os fluxos e
+precisa estar marcada para sincronizar nesse PC. No `config.json`:
+`"pasta_entrada": "%USERPROFILE%\\OneDrive - Apis Flora Indl. e Coml. Ltda\\FaturasEntrada"`.
+
+Rode o coletor em um computador só. Dois PCs gravando o mesmo
+`registro.json` geram cópias em conflito no OneDrive.
 
 ## Como funciona
 
-1. Abre as pastas do Outlook definidas no `config.json` e pega os anexos em PDF
-   dos últimos dias (45 por padrão).
+1. Lê a `pasta_entrada` (PDFs e avisos .html gravados pelos fluxos). Sem
+   `pasta_entrada`, abre as pastas do Outlook clássico definidas no
+   `config.json` e pega os anexos em PDF dos últimos dias (45 por padrão).
 2. Descarta o que não é fatura de frete (nota fiscal, DACTE avulso, manual,
    comunicado...) pelo conteúdo do PDF, não pela pasta. Para contar como fatura
    de modelo desconhecido, o PDF precisa ter boleto, a empresa como pagadora e
@@ -95,9 +137,14 @@ lugar dos dados de exemplo.
 ## Atualização automática
 
 No Agendador de Tarefas do Windows, crie uma tarefa diária (ex.: 7h e 13h) que
-execute `executar_coletor.bat`. O histórico de cada execução fica em
-`coletor.log`. O Outlook precisa estar instalado e com a conta configurada
-nesse computador.
+execute `executar_coletor.bat` ("Iniciar em" pode ficar vazio). Deixe
+"Executar somente quando o usuário estiver conectado", porque o OneDrive só
+sincroniza com o usuário logado, e marque em Configurações "Executar a tarefa o
+mais cedo possível após perder uma inicialização agendada". O histórico de cada
+execução fica em `coletor.log`.
+
+Se o Windows avisar que o `.bat` veio da internet, desmarque "Sempre perguntar
+antes de abrir este arquivo" e execute uma vez.
 
 ## Dados sensíveis
 
