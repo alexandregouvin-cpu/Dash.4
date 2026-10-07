@@ -684,6 +684,8 @@ body.tv .conferir .ver { display: none; }
       estado.transp = "";
       timers.push(setInterval(function () { if (paginas.length > 1) { estado.paginaFavo = (estado.paginaFavo + 1) % paginas.length; renderFavo(); } }, 12000));
       timers.push(setInterval(function () { estado.paginaProx++; renderLado(); }, 10000));
+      // Na TV a página fica aberta o dia todo: recarrega a cada 30 min para pegar o que o coletor gravou.
+      timers.push(setInterval(function () { location.reload(); }, 30 * 60000));
     }
     ajustarTV();
     render();
