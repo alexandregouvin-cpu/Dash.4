@@ -66,8 +66,11 @@ Rode o coletor em um computador só. Dois PCs gravando o mesmo
 5. Confere o resultado com a **linha digitável do boleto**, que traz o
    vencimento e o valor embutidos. Se não bater, a fatura vai para "Conferir"
    no painel com o valor do boleto ao lado.
-6. A mesma fatura recebida mais de uma vez vira um registro só, com o aviso
-   "Recebida N vezes".
+6. A mesma fatura recebida mais de uma vez (primeiro envio e lembretes de
+   vencimento, com ou sem PDF) vira um registro só, pela transportadora e pelo
+   número da fatura. No livro aparece "recebida N vezes", sem ir para
+   "Conferir". Só vai para "Conferir" se o mesmo número chegar com valores
+   diferentes; nesse caso fica o envio mais recente.
 7. O que já foi lido fica anotado em `registro.json`, para não
    ler o mesmo PDF de novo.
 

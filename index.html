@@ -344,6 +344,31 @@ body.tv .conferir .ver { display: none; }
     return r;
   });
 
+  // A mesma fatura reenviada como lembrete de vencimento entra uma vez só.
+  // Mesmo número com valor diferente fica o envio mais recente, marcado para conferir.
+  todas = (function (lista) {
+    function chave(f) {
+      var num = String(f.numero || "").toUpperCase().replace(/[^0-9A-Z]/g, "").replace(/^0+/, "");
+      return (String(f.cnpj || "").replace(/\D/g, "") || String(f.transportadora).toUpperCase()) + "|" + (num || f.id);
+    }
+    var grupos = {}, ordem = [];
+    lista.forEach(function (f) {
+      var k = chave(f);
+      if (!grupos[k]) { grupos[k] = []; ordem.push(k); }
+      grupos[k].push(f);
+    });
+    return ordem.map(function (k) {
+      var g = grupos[k].slice().sort(function (a, b) { return String(a.recebido_em || "").localeCompare(String(b.recebido_em || "")); });
+      if (g.length === 1) return g[0];
+      var valores = g.map(function (f) { return Math.round(f.valor * 100) / 100; })
+        .filter(function (v, i, l) { return l.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+      var r = Object.assign({}, valores.length > 1 ? g[g.length - 1] : g[0]);
+      r.copias = g.reduce(function (s, f) { return s + (f.copias || 1); }, 0);
+      if (valores.length > 1) r.valoresDiferentes = valores;
+      return r;
+    });
+  })(todas);
+
   function situacao(f) {
     if (f.pago || pagasLocais[f.id]) return "paga";
     if (!f.dVenc) return "aberta";
@@ -507,16 +532,11 @@ body.tv .conferir .ver { display: none; }
   // ---------- Conferir ----------
   var avisos = [];
   function motivosRevisao(lista) {
-    function chave(f) { return String(f.cnpj || f.transportadora).replace(/\D/g, "") + "|" + String(f.numero).toUpperCase(); }
-    var grupos = {};
-    lista.forEach(function (f) { (grupos[chave(f)] = grupos[chave(f)] || []).push(f); });
-    var saida = [], vistos = {};
+    var saida = [];
     lista.forEach(function (f) {
-      var motivos = [], k = chave(f);
-      if (grupos[k].length > 1) {
-        if (vistos[k]) return;
-        vistos[k] = true;
-        motivos.push("Recebida " + grupos[k].length + " vezes");
+      var motivos = [];
+      if (f.valoresDiferentes && !(f.pendencias || []).some(function (p) { return /valores diferentes/.test(p); })) {
+        motivos.push("Mesmo número com valores diferentes: " + f.valoresDiferentes.map(function (v) { return brl.format(v); }).join(" / "));
       }
       if (f.confianca === "baixa") motivos.push("Leitura do PDF com baixa confiança");
       (f.pendencias || []).forEach(function (p) { motivos.push(p); });
@@ -574,7 +594,7 @@ body.tv .conferir .ver { display: none; }
       var st = situacao(f), paga = st === "paga";
       return '<tr class="' + (paga ? "paga" : "") + '"><td><span class="st ' + st + '">' + HEXI + ROTULO[st] + "</span></td>" +
         '<td><span class="quem"' + (f.razao_social ? ' title="' + esc(f.razao_social) + '"' : "") + ">" + esc(f.transportadora) + '</span><span class="sub num">' + esc(f.cnpj || "") + "</span></td>" +
-        '<td class="num">' + esc(f.numero) + (f.tipo === "reentrega_devolucao" ? '<span class="sub">reentrega / devolução</span>' : "") + (f.confianca === "baixa" ? '<span class="alerta">conferir leitura</span>' : "") + "</td>" +
+        '<td class="num">' + esc(f.numero) + (f.tipo === "reentrega_devolucao" ? '<span class="sub">reentrega / devolução</span>' : "") + (f.copias > 1 ? '<span class="sub">recebida ' + f.copias + " vezes</span>" : "") + (f.confianca === "baixa" ? '<span class="alerta">conferir leitura</span>' : "") + "</td>" +
         '<td class="num">' + (f.dEmissao ? dataLonga.format(f.dEmissao) : "—") + "</td>" +
         '<td class="num">' + (f.dVenc ? dataLonga.format(f.dVenc) : "—") + (paga ? "" : '<span class="sub">' + relativo(f) + "</span>") + "</td>" +
         '<td class="dir num">' + (f.qtd_ctes == null ? "—" : f.qtd_ctes) + "</td>" +

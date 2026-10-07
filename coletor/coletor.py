@@ -298,19 +298,31 @@ def padronizar_nomes(faturas: list[dict], cfg: dict) -> None:
             f["transportadora"] = max(contagem[r].items(), key=lambda kv: kv[1])[0]
 
 
+def _brl(v: float) -> str:
+    return "R$ " + f"{v:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
 def juntar_copias(faturas: list[dict]) -> list[dict]:
-    """A mesma fatura recebida mais de uma vez vira um registro só, com aviso."""
+    """A mesma fatura recebida mais de uma vez (primeiro envio e lembretes de
+    vencimento) vira um registro só. Lembrete com o mesmo valor é normal e não vai
+    para "Conferir"; mesmo número com valor diferente vai, e fica o envio mais recente."""
     grupos: dict[tuple, list[dict]] = {}
     for f in faturas:
-        chave = (so_digitos(f.get("cnpj")) or f["transportadora"].upper(), f["numero"].upper(), round(f["valor"], 2))
+        numero = re.sub(r"[^0-9A-Z]", "", (f["numero"] or "").upper()).lstrip("0")
+        chave = (so_digitos(f.get("cnpj")) or f["transportadora"].upper(), numero or f["id"])
         grupos.setdefault(chave, []).append(f)
     saida = []
     for lista in grupos.values():
         lista.sort(key=lambda f: f.get("recebido_em") or "")
-        f = dict(lista[0])
+        valores = sorted({round(f["valor"], 2) for f in lista})
+        if len(valores) == 1:
+            f = dict(lista[0])
+        else:
+            f = dict(lista[-1])
+            f["pendencias"] = f["pendencias"] + [
+                "Mesmo número com valores diferentes: " + " / ".join(_brl(v) for v in valores)]
         if len(lista) > 1:
             f["copias"] = len(lista)
-            f["pendencias"] = f["pendencias"] + [f"Recebida {len(lista)} vezes"]
         saida.append(f)
     return saida
 

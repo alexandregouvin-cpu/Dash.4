@@ -74,8 +74,9 @@ Instalação e uso em [coletor/README.md](coletor/README.md).
 
 Campos extras que o coletor grava além dos do exemplo acima: `razao_social`,
 `cnpj_pagador` (unidade da empresa que paga), `tipo` (`frete` ou
-`reentrega_devolucao`), `linha_digitavel` e `copias` (quando a mesma fatura
-chegou mais de uma vez).
+`reentrega_devolucao`), `linha_digitavel` e `copias` (quantas vezes a mesma
+fatura chegou, como no primeiro envio e nos lembretes de vencimento; ela entra
+uma vez só no painel).
 
 ## Próximas etapas
 
