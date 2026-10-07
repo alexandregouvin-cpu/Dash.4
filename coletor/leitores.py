@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 
 # Aumente quando um leitor mudar: o coletor relê só os PDFs lidos com versão anterior.
-VERSAO_LEITORES = "2"
+VERSAO_LEITORES = "3"
 
 CAMPOS = (
     "eh_fatura", "transportadora", "nome_curto", "cnpj_transportadora", "numero_fatura",
@@ -192,9 +192,13 @@ def ler_movimente(t: str) -> dict:
     r = vazio()
     r["transportadora"] = t.strip().splitlines()[0].strip()
     r["cnpj_transportadora"] = achar(rf"^CNPJ:({CNPJ})", t)
+    # O número da fatura fica logo abaixo do nome, no topo (é o que vai no assunto do
+    # e-mail). O número da tabela "Número Vencimento Parcela" é o do boleto.
+    r["numero_fatura"] = achar(r"\A.+\n(\d+)\n", t, flags=0)
     m = re.search(rf"^Número Vencimento Parcela Valor.*\n(\d+) ({DATA}) \S+ ({VALOR})", t, re.M)
     if m:
-        r["numero_fatura"], r["data_vencimento"], r["valor_total"] = m.group(1), data_iso(m.group(2)), numero(m.group(3))
+        r["numero_fatura"] = r["numero_fatura"] or m.group(1)
+        r["data_vencimento"], r["valor_total"] = data_iso(m.group(2)), numero(m.group(3))
     r["data_emissao"] = data_iso(achar(rf"Desconto Emissão\n.*?({DATA})", t))
     qtd = achar(r"Qtd\. Remessas (\d+)", t)
     r["qtd_ctes"] = int(qtd) if qtd else None
