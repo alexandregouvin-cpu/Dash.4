@@ -28,11 +28,14 @@ Tem **Modo Individual** (filtros e livro de faturas) e **Modo TV** (tela única
 | Números | Total em aberto, quanto vence em 7 dias, quantidade de faturas e de transportadoras |
 | Próximos pagamentos | Vencidas e próximas faturas por data de vencimento |
 | Conferir | Duplicidades, leituras com baixa confiança, campos faltando e prazos curtos, alternando a cada 7 segundos |
-| Livro de faturas | Só no Modo Individual: todas as faturas, filtros, ordenação, link para o PDF e marcação de "paga"; botão **Copiar resumo** para e-mail ou Teams |
+| Livro de faturas | Só no Modo Individual: todas as faturas, filtros, ordenação, link para o PDF e marcação de "liberada" (com data e hora) |
+| Resumo do dia | Botão no topo (Modo Individual): gera uma imagem com as faturas **liberadas hoje**, o total em aberto e as pendentes (vencidas, vencem hoje e próximos 7 dias), com CNPJ, nº da fatura e CT-es. **Copiar imagem** (cola direto no Teams/Outlook), **Baixar PNG** ou **Copiar texto** |
 
-"Marcar como paga" fica salvo só no navegador de quem marcou. Quando o coletor
-souber a situação de pagamento (por exemplo, cruzando com um relatório do TMS),
-ele grava `"pago": true` e a fatura aparece como paga para todos.
+"Marcar como liberada" (a logística liberou; o financeiro paga depois) fica salvo só
+no navegador de quem marcou, com a data e a hora: por isso o resumo do dia deve ser
+gerado no mesmo computador em que as faturas foram liberadas. Quando o coletor souber
+a situação de pagamento (por exemplo, cruzando com um relatório do TMS), ele grava
+`"pago": true` e a fatura aparece como liberada para todos.
 
 ## Formato dos dados (`dados/faturas.js`)
 
