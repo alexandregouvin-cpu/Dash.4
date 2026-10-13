@@ -73,6 +73,9 @@ Rode o coletor em um computador só. Dois PCs gravando o mesmo
    diferentes; nesse caso fica o envio mais recente.
 7. O que já foi lido fica anotado em `registro.json`, para não
    ler o mesmo PDF de novo.
+8. Um PDF que não abre (corrompido, protegido por senha ou ainda sincronizando)
+   aparece como ERRO no `coletor.log` e é pulado; as demais faturas são lidas e o
+   painel é atualizado mesmo assim. Na execução seguinte ele é tentado de novo.
 
 ## Modelos de fatura reconhecidos
 

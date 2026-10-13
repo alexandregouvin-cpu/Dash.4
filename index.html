@@ -392,8 +392,23 @@ body.tv .conferir .ver { display: none; }
     });
   })(todas);
 
+  // A marcação de liberada vale pelo id e também por transportadora + número: quando o aviso por
+  // e-mail é substituído pelo PDF (ou chega um lembrete), o id muda, mas a fatura é a mesma.
+  function chaveLiberacao(f) {
+    var n = String(f.numero || "").trim().replace(/-\d{1,2}$/, "").replace(/\D/g, "").replace(/^0+/, "");
+    var nome = String(f.transportadora || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "").slice(0, 5);
+    return n ? "k:" + nome + "|" + n : null;
+  }
+  function marcaLiberada(f) { var k = chaveLiberacao(f); return pagasLocais[f.id] || (k && pagasLocais[k]) || null; }
+  // Marcações feitas antes desta regra só têm o id: grava também a chave, para não se perderem.
+  (function () {
+    var mudou = false;
+    todas.forEach(function (f) { var k = chaveLiberacao(f); if (k && pagasLocais[f.id] && !pagasLocais[k]) { pagasLocais[k] = pagasLocais[f.id]; mudou = true; } });
+    if (mudou) gravarLocal(CHAVE_PAGAS, JSON.stringify(pagasLocais));
+  })();
+
   function situacao(f) {
-    if (f.pago || pagasLocais[f.id]) return "paga";
+    if (f.pago || marcaLiberada(f)) return "paga";
     if (!f.dVenc) return "aberta";
     var d = diff(f.dVenc, hoje);
     if (d < 0) return "vencida";
@@ -415,7 +430,7 @@ body.tv .conferir .ver { display: none; }
   }
 
   // Liberação = marcação "liberada" feita neste navegador (guarda data e hora).
-  function dataLiberada(f) { var iso = pagasLocais[f.id]; var d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d : null; }
+  function dataLiberada(f) { var iso = marcaLiberada(f); var d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d : null; }
   function horaCurta(d) { return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }
   function quandoLiberada(f) {
     var d = dataLiberada(f);
@@ -632,7 +647,7 @@ body.tv .conferir .ver { display: none; }
         '<td><span class="quem"' + (f.razao_social ? ' title="' + esc(f.razao_social) + '"' : "") + ">" + esc(f.transportadora) + '</span><span class="sub num">' + esc(f.cnpj || "") + "</span></td>" +
         '<td class="num">' + esc(f.numero) + (f.tipo === "reentrega_devolucao" ? '<span class="sub">reentrega / devolução</span>' : "") + (f.copias > 1 ? '<span class="sub">recebida ' + f.copias + " vezes</span>" : "") + (f.confianca === "baixa" ? '<span class="alerta">conferir leitura</span>' : "") + "</td>" +
         '<td class="num">' + (f.dEmissao ? dataLonga.format(f.dEmissao) : "—") + "</td>" +
-        '<td class="num">' + (f.dVenc ? dataLonga.format(f.dVenc) : "—") + (paga ? (pagasLocais[f.id] ? '<span class="sub">liberada ' + quandoLiberada(f) + "</span>" : "") : '<span class="sub">' + relativo(f) + "</span>") + "</td>" +
+        '<td class="num">' + (f.dVenc ? dataLonga.format(f.dVenc) : "—") + (paga ? (marcaLiberada(f) ? '<span class="sub">liberada ' + quandoLiberada(f) + "</span>" : "") : '<span class="sub">' + relativo(f) + "</span>") + "</td>" +
         '<td class="dir num">' + (f.qtd_ctes == null ? "—" : f.qtd_ctes) + "</td>" +
         '<td class="dir num">' + brl.format(f.valor) + "</td>" +
         "<td>" + (f.arquivo ? '<a href="' + esc(f.arquivo) + '" target="_blank" rel="noopener">' + (f.fonte === "email" ? "Página" : "Abrir") + "</a>" : '<span class="sub">—</span>') +
@@ -753,7 +768,10 @@ body.tv .conferir .ver { display: none; }
   document.querySelector("#tabela tbody").addEventListener("change", function (e) {
     var id = e.target.dataset.paga;
     if (!id) return;
-    if (e.target.checked) pagasLocais[id] = new Date().toISOString(); else delete pagasLocais[id];
+    var fat = todas.filter(function (f) { return f.id === id; })[0];
+    var k = fat && chaveLiberacao(fat);
+    if (e.target.checked) { pagasLocais[id] = new Date().toISOString(); if (k) pagasLocais[k] = pagasLocais[id]; }
+    else { delete pagasLocais[id]; if (k) delete pagasLocais[k]; }
     gravarLocal(CHAVE_PAGAS, JSON.stringify(pagasLocais));
     render();
     aviso(e.target.checked ? "Fatura marcada como liberada" : "Fatura voltou para em aberto");

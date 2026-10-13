@@ -364,6 +364,18 @@ def pdfs_da_pasta(pasta: Path, cfg: dict) -> list[dict]:
     return itens
 
 
+def data_local(iso: str | None) -> str | None:
+    """O Power Automate grava o recebimento em UTC (ex.: 2026-10-14T01:30:00+00:00):
+    converte para a data local, senão um e-mail das 22h30 entraria com a data do dia seguinte."""
+    if not iso:
+        return None
+    try:
+        d = dt.datetime.fromisoformat(iso.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return iso.strip()[:10] or None
+    return (d.astimezone() if d.tzinfo else d).date().isoformat()
+
+
 def avisos_da_pasta(pasta: Path, registro: dict) -> int:
     """Cópias de e-mail (.html) gravadas pelo fluxo do Power Automate.
     Formato: linhas "Assunto:", "De:" e "Recebido:", uma linha "---" e depois o corpo em HTML."""
@@ -377,7 +389,7 @@ def avisos_da_pasta(pasta: Path, registro: dict) -> int:
         bruto = p.read_text(encoding="utf-8", errors="replace")
         cabecalho, _, corpo = bruto.partition("\n---\n")
         campos = dict(re.findall(r"^(Assunto|De|Recebido):\s*(.*)$", cabecalho, re.M))
-        recebido = (campos.get("Recebido") or "")[:10] or dt.date.fromtimestamp(p.stat().st_mtime).isoformat()
+        recebido = data_local(campos.get("Recebido")) or dt.date.fromtimestamp(p.stat().st_mtime).isoformat()
         lido = ler_email(campos.get("Assunto", ""), corpo or bruto, campos.get("De", ""))
         if lido:
             registro["emails"][chave] = {"lido": lido, "origem": {
@@ -613,6 +625,11 @@ def main() -> None:
                 erros += 1
                 log(f"  ERRO em {item['nome']}: {e}")
                 continue
+            except Exception as e:  # PDF corrompido, protegido por senha, ainda sincronizando...
+                # Um arquivo com problema não pode impedir a atualização do painel com os demais.
+                erros += 1
+                log(f"  ERRO ao ler {item['nome']} ({type(e).__name__}: {e}). Arquivo pulado; os demais seguem.")
+                continue
         if item.get("chave_anexo") and item["chave_anexo"] not in registro["anexos"]:
             registro["anexos"].append(item["chave_anexo"])
 
@@ -625,10 +642,14 @@ def main() -> None:
             arq = RAIZ_PAINEL / r["origem"]["arquivo"]
             if arq.exists():
                 log(f"  relendo com leitores atualizados: {r['origem']['nome']}...")
-                texto = extrair_texto(arq)
-                r["boletos"] = ler_boletos(texto)
-                r["lido"] = ler_local(texto, r["boletos"], so_digitos(cfg["cnpj_raiz_empresa"]))
-                r["versao"] = VERSAO_LEITORES
+                try:
+                    texto = extrair_texto(arq)
+                    r["boletos"] = ler_boletos(texto)
+                    r["lido"] = ler_local(texto, r["boletos"], so_digitos(cfg["cnpj_raiz_empresa"]))
+                    r["versao"] = VERSAO_LEITORES
+                except Exception as e:
+                    erros += 1
+                    log(f"  ERRO ao reler {r['origem']['nome']} ({type(e).__name__}: {e}). Mantida a leitura anterior.")
 
     faturas = []
     ignorados = 0
