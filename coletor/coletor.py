@@ -335,6 +335,26 @@ def hash_arquivo(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+DICA_ONEDRIVE = ("Se o arquivo está só na nuvem do OneDrive, clique com o botão direito na pasta "
+                 "FaturasEntrada e escolha \"Sempre manter neste dispositivo\".")
+
+
+def hash_com_cache(p: Path, registro: dict) -> str:
+    """Hash do arquivo sem reabri-lo quando tamanho e data não mudaram.
+    Na pasta do OneDrive os arquivos podem estar só na nuvem: abrir obriga o download,
+    que às vezes falha (Errno 22) ou trava. Assim só os arquivos novos são abertos."""
+    st = p.stat()  # tamanho e data vêm do Windows sem baixar o arquivo
+    marca = [st.st_size, int(st.st_mtime)]
+    chave = str(p.resolve())
+    anterior = registro["arquivos"].get(chave)
+    if anterior and anterior[:2] == marca:
+        return anterior[2]
+    log(f"  abrindo {p.name}...")
+    h = hash_arquivo(p)
+    registro["arquivos"][chave] = marca + [h]
+    return h
+
+
 def guardar_pdf(origem: Path, cfg: dict, data: dt.date, h: str) -> str:
     """Copia o PDF para pdfs/AAAA-MM/ e devolve o caminho relativo ao painel."""
     destino_dir = caminho(cfg, "pasta_pdfs") / f"{data:%Y-%m}"
@@ -349,19 +369,28 @@ def guardar_pdf(origem: Path, cfg: dict, data: dt.date, h: str) -> str:
         return destino.as_uri()
 
 
-def pdfs_da_pasta(pasta: Path, cfg: dict) -> list[dict]:
+def pdfs_da_pasta(pasta: Path, cfg: dict, registro: dict) -> tuple[list[dict], int]:
+    """PDFs da pasta e quantos não puderam ser abertos."""
     itens = []
+    falhas = 0
     # Inclui subpastas; .pdf ou .PDF; o mesmo arquivo nunca entra duas vezes.
     vistos = set()
-    for p in sorted(pasta.rglob("*")):
-        if not p.is_file() or p.suffix.lower() != ".pdf" or p.resolve() in vistos:
+    arquivos = [p for p in sorted(pasta.rglob("*")) if p.is_file() and p.suffix.lower() == ".pdf"]
+    log(f"{len(arquivos)} PDF(s) na pasta")
+    for p in arquivos:
+        if p.resolve() in vistos:
             continue
         vistos.add(p.resolve())
-        h = hash_arquivo(p)
+        try:
+            h = hash_com_cache(p, registro)
+        except OSError as e:
+            falhas += 1
+            log(f"  ERRO ao abrir {p.name} ({e}). Arquivo pulado; os demais seguem. {DICA_ONEDRIVE}")
+            continue
         data = dt.date.fromtimestamp(p.stat().st_mtime)
         itens.append({"hash": h, "caminho": p, "data": data,
                       "remetente": None, "recebido_em": data.isoformat(), "nome": p.name})
-    return itens
+    return itens, falhas
 
 
 def data_local(iso: str | None) -> str | None:
@@ -376,17 +405,22 @@ def data_local(iso: str | None) -> str | None:
     return (d.astimezone() if d.tzinfo else d).date().isoformat()
 
 
-def avisos_da_pasta(pasta: Path, registro: dict) -> int:
+def avisos_da_pasta(pasta: Path, registro: dict) -> tuple[int, int]:
     """Cópias de e-mail (.html) gravadas pelo fluxo do Power Automate.
     Formato: linhas "Assunto:", "De:" e "Recebido:", uma linha "---" e depois o corpo em HTML."""
-    novos = 0
-    for p in sorted(pasta.rglob("*")):
-        if not p.is_file() or p.suffix.lower() not in (".html", ".htm"):
+    novos = falhas = 0
+    arquivos = [p for p in sorted(pasta.rglob("*")) if p.is_file() and p.suffix.lower() in (".html", ".htm")]
+    log(f"{len(arquivos)} e-mail(s) .html na pasta")
+    for p in arquivos:
+        try:
+            chave = "arq:" + hash_com_cache(p, registro)
+            if chave in registro["emails"] or chave in registro["emails_vistos"]:
+                continue
+            bruto = p.read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            falhas += 1
+            log(f"  ERRO ao abrir {p.name} ({e}). Arquivo pulado; os demais seguem. {DICA_ONEDRIVE}")
             continue
-        chave = "arq:" + hash_arquivo(p)
-        if chave in registro["emails"] or chave in registro["emails_vistos"]:
-            continue
-        bruto = p.read_text(encoding="utf-8", errors="replace")
         cabecalho, _, corpo = bruto.partition("\n---\n")
         campos = dict(re.findall(r"^(Assunto|De|Recebido):\s*(.*)$", cabecalho, re.M))
         recebido = data_local(campos.get("Recebido")) or dt.date.fromtimestamp(p.stat().st_mtime).isoformat()
@@ -399,7 +433,7 @@ def avisos_da_pasta(pasta: Path, registro: dict) -> int:
             novos += 1
         else:
             registro["emails_vistos"].append(chave)
-    return novos
+    return novos, falhas
 
 
 def pdfs_do_outlook(cfg: dict, registro: dict) -> list[dict]:
@@ -569,7 +603,7 @@ def main() -> None:
 
     cfg = carregar_config()
     arq_registro = AQUI / cfg["arquivo_registro"]
-    registro = {"leituras": {}, "anexos": [], "ignorados": {}, "emails": {}, "emails_vistos": []}
+    registro = {"leituras": {}, "anexos": [], "ignorados": {}, "emails": {}, "emails_vistos": [], "arquivos": {}}
     if arq_registro.exists() and not args.reprocessar:
         registro.update(json.loads(arq_registro.read_text(encoding="utf-8")))
 
@@ -579,12 +613,14 @@ def main() -> None:
         if not pasta.is_dir():
             raise SystemExit(f"A pasta {pasta} não existe. Confira o caminho (dica: copie da barra de endereço do Explorador).")
         log(f"Lendo a pasta {pasta}")
-        novos = pdfs_da_pasta(pasta, cfg)
-        avisos = avisos_da_pasta(pasta, registro)
+        novos, falhas_pdf = pdfs_da_pasta(pasta, cfg, registro)
+        avisos, falhas_email = avisos_da_pasta(pasta, registro)
+        falhas_abertura = falhas_pdf + falhas_email
         if not novos and not avisos and not registro["leituras"] and not registro["emails"]:
             raise SystemExit(f"Nenhum PDF ou e-mail encontrado em {pasta}. O painel não foi alterado.")
     else:
         novos = pdfs_do_outlook(cfg, registro)
+        falhas_abertura = 0
     log(f"{len(novos)} PDF(s) encontrados")
     ja_lidos = sum(1 for i in novos if i["hash"] in registro["leituras"] or i["hash"] in registro["ignorados"])
     if ja_lidos:
@@ -592,7 +628,7 @@ def main() -> None:
 
     prontas = json.loads(Path(args.leituras_prontas).read_text(encoding="utf-8")) if args.leituras_prontas else None
     cliente = None
-    erros = 0
+    erros = falhas_abertura
     for item in novos:
         anterior = registro["leituras"].get(item["hash"]) or registro["ignorados"].get(item["hash"])
         if anterior and (cfg["leitura"] == "claude" or anterior.get("versao") == VERSAO_LEITORES):
