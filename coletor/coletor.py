@@ -33,7 +33,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI))
-from leitores import VERSAO_LEITORES, chave_fatura, ler_email, ler_local, link_da_fatura  # noqa: E402
+from leitores import VERSAO_EMAILS, VERSAO_LEITORES, chave_fatura, ler_email, ler_local, link_da_fatura  # noqa: E402
 RAIZ_PAINEL = AQUI.parent  # pasta onde está o index.html
 
 # ---------------------------------------------------------------------------
@@ -405,16 +405,20 @@ def data_local(iso: str | None) -> str | None:
     return (d.astimezone() if d.tzinfo else d).date().isoformat()
 
 
-def avisos_da_pasta(pasta: Path, registro: dict) -> tuple[int, int]:
+def avisos_da_pasta(pasta: Path, registro: dict, cfg: dict) -> tuple[int, int]:
     """Cópias de e-mail (.html) gravadas pelo fluxo do Power Automate.
     Formato: linhas "Assunto:", "De:" e "Recebido:", uma linha "---" e depois o corpo em HTML."""
     novos = falhas = 0
+    # Leitura dos avisos mudou: relê os e-mails já vistos (os arquivos continuam na pasta).
+    reler = registro.get("versao_emails") != VERSAO_EMAILS
+    if reler:
+        registro["emails_vistos"] = []
     arquivos = [p for p in sorted(pasta.rglob("*")) if p.is_file() and p.suffix.lower() in (".html", ".htm")]
     log(f"{len(arquivos)} e-mail(s) .html na pasta")
     for p in arquivos:
         try:
             chave = "arq:" + hash_com_cache(p, registro)
-            if chave in registro["emails"] or chave in registro["emails_vistos"]:
+            if (chave in registro["emails"] and not reler) or chave in registro["emails_vistos"]:
                 continue
             bruto = p.read_text(encoding="utf-8", errors="replace")
         except OSError as e:
@@ -424,7 +428,7 @@ def avisos_da_pasta(pasta: Path, registro: dict) -> tuple[int, int]:
         cabecalho, _, corpo = bruto.partition("\n---\n")
         campos = dict(re.findall(r"^(Assunto|De|Recebido):\s*(.*)$", cabecalho, re.M))
         recebido = data_local(campos.get("Recebido")) or dt.date.fromtimestamp(p.stat().st_mtime).isoformat()
-        lido = ler_email(campos.get("Assunto", ""), corpo or bruto, campos.get("De", ""))
+        lido = ler_email(campos.get("Assunto", ""), corpo or bruto, campos.get("De", ""), so_digitos(cfg["cnpj_raiz_empresa"]))
         if lido:
             registro["emails"][chave] = {"lido": lido, "origem": {
                 "arquivo": link_da_fatura(corpo or bruto), "remetente": campos.get("De"),
@@ -432,7 +436,9 @@ def avisos_da_pasta(pasta: Path, registro: dict) -> tuple[int, int]:
             log(f"  aviso por e-mail: {lido['nome_curto']} {lido['numero_fatura']}")
             novos += 1
         else:
+            registro["emails"].pop(chave, None)
             registro["emails_vistos"].append(chave)
+    registro["versao_emails"] = VERSAO_EMAILS
     return novos, falhas
 
 
@@ -549,7 +555,7 @@ def faturas_dos_avisos(registro: dict, faturas_pdf: list[dict]) -> list[dict]:
             "id": "em" + hashlib.sha256(entry.encode()).hexdigest()[:14],
             "transportadora": lido["nome_curto"],
             "razao_social": lido["transportadora"],
-            "cnpj": None,
+            "cnpj": lido.get("cnpj_transportadora"),
             "numero": lido["numero_fatura"],
             "emissao": None,
             "vencimento": valida_data(lido["data_vencimento"]),
@@ -562,8 +568,8 @@ def faturas_dos_avisos(registro: dict, faturas_pdf: list[dict]) -> list[dict]:
             "arquivo": r["origem"].get("arquivo"),
             "fonte": "email",
             "linha_digitavel": None,
-            "confianca": "media",
-            "pendencias": [],
+            "confianca": "baixa" if lido.get("observacao") else "media",
+            "pendencias": [lido["observacao"]] if lido.get("observacao") else [],
             "pago": False,
         })
     return saida
@@ -614,7 +620,7 @@ def main() -> None:
             raise SystemExit(f"A pasta {pasta} não existe. Confira o caminho (dica: copie da barra de endereço do Explorador).")
         log(f"Lendo a pasta {pasta}")
         novos, falhas_pdf = pdfs_da_pasta(pasta, cfg, registro)
-        avisos, falhas_email = avisos_da_pasta(pasta, registro)
+        avisos, falhas_email = avisos_da_pasta(pasta, registro, cfg)
         falhas_abertura = falhas_pdf + falhas_email
         if not novos and not avisos and not registro["leituras"] and not registro["emails"]:
             raise SystemExit(f"Nenhum PDF ou e-mail encontrado em {pasta}. O painel não foi alterado.")
@@ -697,6 +703,7 @@ def main() -> None:
     padronizar_nomes(faturas, cfg)
     faturas = juntar_copias(faturas)
     faturas += faturas_dos_avisos(registro, faturas)
+    padronizar_nomes(faturas, cfg)  # avisos com CNPJ ganham o mesmo nome das faturas em PDF
     faturas.sort(key=lambda f: (f["vencimento"] or "9999", f["transportadora"]))
 
     arq_registro.write_text(json.dumps(registro, ensure_ascii=False, indent=1), encoding="utf-8")

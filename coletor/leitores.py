@@ -16,6 +16,8 @@ import re
 
 # Aumente quando um leitor mudar: o coletor relê só os PDFs lidos com versão anterior.
 VERSAO_LEITORES = "3"
+# Idem para a leitura dos avisos por e-mail (.html): versão nova faz os avisos já gravados serem relidos.
+VERSAO_EMAILS = "2"
 
 CAMPOS = (
     "eh_fatura", "transportadora", "nome_curto", "cnpj_transportadora", "numero_fatura",
@@ -296,7 +298,13 @@ def link_da_fatura(html: str | None) -> str | None:
     return None
 
 
-def ler_email(assunto: str, corpo: str, remetente: str = "") -> dict | None:
+def _sem_email(s: str | None) -> str | None:
+    """Nome de transportadora só se não for um endereço de e-mail (ex.: no-reply@sswsistemas.com.br)."""
+    s = (s or "").strip(" .:-\t")
+    return s if len(s) >= 3 and "@" not in s else None
+
+
+def ler_email(assunto: str, corpo: str, remetente: str = "", raiz_empresa: str = "49345358") -> dict | None:
     """Tira número, valor e vencimento do texto de um aviso de fatura.
     Devolve None quando o e-mail não é um aviso de fatura conhecido."""
     t = _texto_limpo(corpo)
@@ -306,18 +314,36 @@ def ler_email(assunto: str, corpo: str, remetente: str = "") -> dict | None:
     if m:
         ano = m.group(5) if len(m.group(5)) == 4 else "20" + m.group(5)
         r.update(numero_fatura=m.group(1), valor_total=numero(m.group(2)), data_vencimento=f"{ano}-{m.group(4)}-{m.group(3)}", modelo="email_ssw")
-        r["transportadora"] = achar(r"realizados por (.+?)\.\s", t) or remetente
     # Expresso São Miguel: "Sua Fatura nº X com vencimento em dd/mm/aaaa no valor de R$ Y"
     m = m or None
     if not r["numero_fatura"]:
         m = re.search(rf"Sua Fatura n[º°o]\s*(\d+) com vencimento em ({DATA}) no valor de R\$ ({VALOR})", t, re.I)
         if m:
             r.update(numero_fatura=m.group(1), data_vencimento=data_iso(m.group(2)), valor_total=numero(m.group(3)), modelo="email_sao_miguel")
-            r["transportadora"] = "Expresso São Miguel" if re.search(r"s[aã]o miguel", assunto + " " + remetente, re.I) else remetente
+            if re.search(r"s[aã]o miguel", assunto + " " + remetente + " " + t, re.I):
+                r["transportadora"] = "Expresso São Miguel"
     if not r["numero_fatura"]:
         return None
-    r["nome_curto"] = nome_por_texto(r["transportadora"]) or nome_por_texto(remetente)
-    r["transportadora"] = r["transportadora"] or r["nome_curto"]
+
+    # Quem cobra. O remetente do SSW é sempre no-reply@sswsistemas.com.br (vale para várias
+    # transportadoras), então o nome vem do próprio aviso, nesta ordem:
+    # CNPJ do rodapé > "realizados por NOME." > nome acima do CNPJ > "De: NOME <...>" do encaminhamento.
+    linha = re.sub(r"\s+", " ", t)  # a frase pode vir quebrada em várias linhas
+    cnpj = next((c for c in cnpjs(linha) if raiz(c) != raiz_empresa), None)
+    razao = (_sem_email(r["transportadora"])
+             or _sem_email(achar(r"realizados por (.+?)\.(?:\s|$)", linha))
+             or _sem_email(achar(rf"Atenciosamente,\s*(?:\S+\s*)??([^,:]{{3,80}}?)\s+CNPJ:?\s*{CNPJ}", linha))
+             or _sem_email(achar(r"De:\s*([^<>]{3,80}?)\s*<[^>]*@sswsistemas", linha, flags=re.I))
+             or _sem_email(remetente))
+    r["cnpj_transportadora"] = cnpj
+    if raiz(cnpj) in NOMES_CONHECIDOS:
+        r["nome_curto"] = NOMES_CONHECIDOS[raiz(cnpj)]
+    elif razao:
+        r["nome_curto"] = nome_por_texto(razao)
+    else:
+        r["nome_curto"] = "Transportadora não identificada"
+        r["observacao"] = "Aviso por e-mail sem o nome da transportadora: confira"
+    r["transportadora"] = razao or r["nome_curto"]
     return r
 
 
