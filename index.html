@@ -753,6 +753,15 @@ body.tv .conferir .ver { display: none; }
   addEventListener("resize", ajustarTV);
   setInterval(function () { if (avisos.length > 1) { estado.aviso = (estado.aviso + 1) % avisos.length; renderConferir(); } }, 7000);
 
+  // No Modo Individual a página também costuma ficar aberta o dia todo: recarrega a cada
+  // 30 min para pegar o que o coletor gravou, mas só se ninguém mexeu nela nos últimos 3 min.
+  var abertoEm = Date.now(), mexeuEm = Date.now();
+  ["pointerdown", "keydown", "wheel", "touchstart"].forEach(function (ev) { addEventListener(ev, function () { mexeuEm = Date.now(); }, { passive: true }); });
+  setInterval(function () {
+    if (estado.modo === "tv" || document.querySelector("dialog[open]")) return;
+    if (Date.now() - abertoEm > 30 * 60000 && Date.now() - mexeuEm > 3 * 60000) location.reload();
+  }, 60000);
+
   // ---------- Livro: filtros e ações ----------
   var selT = document.getElementById("f-transp");
   Array.from(new Set(todas.map(function (f) { return f.transportadora; }))).sort(function (a, b) { return a.localeCompare(b, "pt-BR"); })
