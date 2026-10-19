@@ -11,7 +11,7 @@ e-mail chega numa pasta do Outlook
   → fluxo do Power Automate grava o corpo (.html) e os PDFs na pasta
     FaturasEntrada do OneDrive
   → o OneDrive sincroniza a pasta no PC
-  → o Agendador de Tarefas roda executar_coletor.bat (7h e 13h)
+  → o Agendador de Tarefas roda o coletor (7h e 13h, ver instalar_agendamento.bat)
   → o painel (index.html) mostra as faturas
 ```
 
@@ -142,15 +142,39 @@ lugar dos dados de exemplo.
 
 ## Atualização automática
 
-No Agendador de Tarefas do Windows, crie uma tarefa diária (ex.: 7h e 13h) que
-execute `executar_coletor.bat` ("Iniciar em" pode ficar vazio). Deixe
-"Executar somente quando o usuário estiver conectado", porque o OneDrive só
-sincroniza com o usuário logado, e marque em Configurações "Executar a tarefa o
-mais cedo possível após perder uma inicialização agendada". O histórico de cada
-execução fica em `coletor.log`.
+Dê dois cliques em `instalar_agendamento.bat` (uma vez, no computador que roda o
+coletor). Ele cria ou recria a tarefa **Coletor de faturas** no Agendador e já
+roda uma vez para testar:
+
+- todo dia às **07:00 e 13:00**, sem janela (pelo `pyw`, então ninguém fecha ou
+  pausa a execução sem querer);
+- também com o notebook **na bateria** (o padrão do Windows não rodaria);
+- se o PC estava desligado no horário, roda assim que for ligado;
+- uma execução que passe de 30 minutos é encerrada, para não bloquear as seguintes;
+- só com o usuário logado, porque o OneDrive só sincroniza com o usuário logado.
+
+`executar_coletor.bat` continua servindo para rodar à mão. O histórico de cada
+execução fica em `coletor.log`, com data e hora em cada linha.
 
 Se o Windows avisar que o `.bat` veio da internet, desmarque "Sempre perguntar
 antes de abrir este arquivo" e execute uma vez.
+
+## Quando o painel não atualiza
+
+O topo do painel (também na TV) mostra "atualizado hoje às HH:MM". Com mais de
+24 horas sem atualizar, aparece em amarelo "sem atualização desde ...".
+
+1. `coletor.log`: a última linha deve ser "Painel atualizado ... (N s)" de hoje.
+   "ERRO ao abrir" indica arquivo preso na nuvem do OneDrive: botão direito na
+   FaturasEntrada → "Sempre manter neste dispositivo". Esses arquivos são pulados
+   e lidos de novo na próxima execução; o painel é gravado com os demais.
+2. Agendador → Coletor de faturas: "Resultado da Última Execução" 0x0 (ou 0x1,
+   que é "terminou com algum erro", ver o log) e "Próxima Execução" preenchida.
+   Sem execução no horário: rode de novo o `instalar_agendamento.bat`.
+3. Log em dia, mas a TV parada: o OneDrive do PC da TV não sincronizou o
+   `dados/faturas.js` (ícone da nuvem pausado ou pedindo login).
+4. Log sem e-mails novos: Power Automate → Meus fluxos → histórico de execuções
+   (conexão expirada depois de troca de senha é a causa comum).
 
 ## Dados sensíveis
 

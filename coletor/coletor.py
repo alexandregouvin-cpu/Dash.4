@@ -29,6 +29,8 @@ import os
 import re
 import shutil
 import sys
+import threading
+import time
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -71,7 +73,22 @@ def caminho(cfg: dict, chave: str) -> Path:
 
 
 def log(msg: str) -> None:
-    print(f"[{dt.datetime.now():%H:%M:%S}] {msg}", flush=True)
+    print(f"[{dt.datetime.now():%d/%m %H:%M:%S}] {msg}", flush=True)
+
+
+def gravar_texto(arq: Path, texto: str) -> None:
+    """Grava num arquivo temporário e troca de uma vez. Se o OneDrive estiver com o
+    arquivo aberto (sincronizando), tenta de novo em alguns segundos."""
+    tmp = arq.with_name(arq.name + ".tmp")
+    for tentativa in range(6):
+        try:
+            tmp.write_text(texto, encoding="utf-8")
+            os.replace(tmp, arq)
+            return
+        except PermissionError:
+            if tentativa == 5:
+                raise
+            time.sleep(5)
 
 
 # ---------------------------------------------------------------------------
@@ -331,8 +348,30 @@ def juntar_copias(faturas: list[dict]) -> list[dict]:
 # Fontes de PDF
 # ---------------------------------------------------------------------------
 
-def hash_arquivo(p: Path) -> str:
-    return hashlib.sha256(p.read_bytes()).hexdigest()
+def hash_arquivo(p: Path, limite: float | None = None) -> str:
+    """Com limite (segundos), desiste se o arquivo não abrir a tempo: um download do
+    OneDrive parado não pode travar a execução inteira (e o Agendador junto)."""
+    if limite is None:
+        return hashlib.sha256(p.read_bytes()).hexdigest()
+    res: dict = {}
+
+    def ler():
+        try:
+            res["h"] = hashlib.sha256(p.read_bytes()).hexdigest()
+        except BaseException as e:  # noqa: BLE001 - repassado abaixo
+            res["e"] = e
+
+    t = threading.Thread(target=ler, daemon=True)
+    t.start()
+    t.join(limite)
+    if t.is_alive():
+        raise OSError(f"não abriu em {int(limite)} s, download do OneDrive parado?")
+    if "e" in res:
+        raise res["e"]
+    return res["h"]
+
+
+LIMITE_ABRIR = 120  # segundos para abrir um arquivo novo da FaturasEntrada
 
 
 DICA_ONEDRIVE = ("Se o arquivo está só na nuvem do OneDrive, clique com o botão direito na pasta "
@@ -350,7 +389,7 @@ def hash_com_cache(p: Path, registro: dict) -> str:
     if anterior and anterior[:2] == marca:
         return anterior[2]
     log(f"  abrindo {p.name}...")
-    h = hash_arquivo(p)
+    h = hash_arquivo(p, LIMITE_ABRIR)
     registro["arquivos"][chave] = marca + [h]
     return h
 
@@ -592,15 +631,16 @@ def gravar_painel(faturas: list[dict], cfg: dict) -> Path:
     saida = caminho(cfg, "arquivo_saida")
     saida.parent.mkdir(parents=True, exist_ok=True)
     dados = {"gerado_em": dt.datetime.now().astimezone().isoformat(timespec="seconds"), "fonte": "outlook", "faturas": faturas}
-    saida.write_text(
+    gravar_texto(saida,
         "// Gerado pelo coletor em " + dados["gerado_em"] + ". Não edite à mão.\n"
-        "window.FATURAS_DADOS = " + json.dumps(dados, ensure_ascii=False, indent=2) + ";\n",
-        encoding="utf-8",
-    )
+        "window.FATURAS_DADOS = " + json.dumps(dados, ensure_ascii=False, indent=2) + ";\n")
     return saida
 
 
 def main() -> None:
+    if sys.stdout is None:  # rodando pelo pyw/pythonw (Agendador, sem janela): tudo vai para o log
+        sys.stdout = sys.stderr = open(AQUI / "coletor.log", "a", encoding="utf-8", buffering=1)
+    inicio = time.monotonic()
     ap = argparse.ArgumentParser(description="Lê faturas de frete em PDF e atualiza o painel.")
     ap.add_argument("--pasta", help="ler os PDFs desta pasta em vez do Outlook")
     ap.add_argument("--reprocessar", action="store_true", help="ler de novo PDFs que já foram lidos")
@@ -706,7 +746,7 @@ def main() -> None:
     padronizar_nomes(faturas, cfg)  # avisos com CNPJ ganham o mesmo nome das faturas em PDF
     faturas.sort(key=lambda f: (f["vencimento"] or "9999", f["transportadora"]))
 
-    arq_registro.write_text(json.dumps(registro, ensure_ascii=False, indent=1), encoding="utf-8")
+    gravar_texto(arq_registro, json.dumps(registro, ensure_ascii=False, indent=1))
     saida = gravar_painel(faturas, cfg)
     shutil.rmtree(AQUI / "_temp", ignore_errors=True)
     conferir_n = sum(1 for f in faturas if f["pendencias"])
@@ -715,7 +755,7 @@ def main() -> None:
         log(f"{so_aviso} fatura(s) vieram só por aviso de e-mail, sem PDF")
     ignorados += len(registro["ignorados"])
     log(f"{len(faturas)} fatura(s) no painel, {conferir_n} para conferir, {ignorados} PDF(s) que não eram fatura, {erros} erro(s)")
-    log(f"Painel atualizado: {saida}")
+    log(f"Painel atualizado: {saida} ({int(time.monotonic() - inicio)} s)")
     if erros:
         sys.exit(1)
 

@@ -56,6 +56,8 @@ button, select, input { font: inherit; color: inherit; }
 .marca img { height: 70px; display: block; }
 .marca .t b { display: block; font-size: 18px; font-weight: 600; letter-spacing: .32em; text-transform: uppercase; color: var(--menta); }
 .marca .t span { font-size: 15px; color: var(--menta-2); }
+.marca .t span .atual { color: var(--apagado); }
+.marca .t span .velho { color: var(--mel); font-weight: 600; }
 .acoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .hora { display: none; font-size: 44px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .botao { display: inline-flex; align-items: center; height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--linha-forte); background: transparent; color: var(--menta); font-weight: 600; font-size: 14px; cursor: pointer; }
@@ -1040,8 +1042,16 @@ body.tv .conferir .ver { display: none; }
     var agora = new Date();
     document.getElementById("hora").textContent = agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     var txt = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(agora);
-    document.getElementById("data").textContent = txt.charAt(0).toUpperCase() + txt.slice(1);
+    document.getElementById("data").innerHTML = esc(txt.charAt(0).toUpperCase() + txt.slice(1)) + situacaoDados(agora);
     if (+inicioDia(agora) !== +hoje) { hoje = inicioDia(agora); render(); }
+  }
+  // Mostra no topo (também na TV) quando o coletor gravou os dados. Mais de 24 h sem
+  // atualizar fica em amarelo: o coletor não rodou ou o arquivo não sincronizou neste PC.
+  function situacaoDados(agora) {
+    if (ehExemplo || !gerado || isNaN(gerado)) return "";
+    var hhmm = gerado.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    if (agora - gerado > 24 * 3600000) return ' <span class="velho">· sem atualização desde ' + dataCurta.format(gerado) + " às " + hhmm + "</span>";
+    return ' <span class="atual">· atualizado ' + (+inicioDia(gerado) === +inicioDia(agora) ? "hoje" : "em " + dataCurta.format(gerado)) + " às " + hhmm + "</span>";
   }
   var gerado = fonte.gerado_em ? new Date(fonte.gerado_em) : null;
   document.getElementById("rod-fonte").textContent = (ehExemplo ? "Dados de exemplo · " : plural(todas.length, "fatura carregada", "faturas carregadas") + " · ") +
