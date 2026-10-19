@@ -25,6 +25,7 @@ import base64
 import datetime as dt
 import hashlib
 import json
+import locale
 import os
 import re
 import shutil
@@ -639,7 +640,9 @@ def gravar_painel(faturas: list[dict], cfg: dict) -> Path:
 
 def main() -> None:
     if sys.stdout is None:  # rodando pelo pyw/pythonw (Agendador, sem janela): tudo vai para o log
-        sys.stdout = sys.stderr = open(AQUI / "coletor.log", "a", encoding="utf-8", buffering=1)
+        # Mesma codificação que o .bat usa ao redirecionar, para o log não misturar acentos.
+        sys.stdout = sys.stderr = open(AQUI / "coletor.log", "a", encoding=locale.getpreferredencoding(False),
+                                       errors="replace", buffering=1)
     inicio = time.monotonic()
     ap = argparse.ArgumentParser(description="Lê faturas de frete em PDF e atualiza o painel.")
     ap.add_argument("--pasta", help="ler os PDFs desta pasta em vez do Outlook")
